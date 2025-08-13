@@ -1,0 +1,24 @@
+{
+  "name": "foodpanda-sd",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.mjs",
+    "dev": "nodemon src/index.mjs"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/pg": "^8.15.4",
+    "nodemon": "^3.1.10"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "dotenv": "^17.2.0",
+    "pg": "^8.16.3"
+  }
+}
