@@ -1,6 +1,6 @@
-import { faker } from '@faker-js/faker';
-import { db } from '../prisma.mjs';
-import { UserType, UserStatus } from '../../generated/prisma/index.js';
+import { faker } from "@faker-js/faker";
+import { db } from "../prisma.mjs";
+import { UserType, UserStatus } from "../../generated/prisma/index.js";
 /**
  * 
 USER (
@@ -19,10 +19,10 @@ deleted_at
  */
 const ACCOUNT_STATUSES = Object.values(UserStatus);
 const USER_TYPES = Object.values(UserType);
-const START_DATE = new Date('2024-11-01T00:00:00Z');
-const END_DATE = new Date('2025-03-31T23:59:59Z');
+const START_DATE = new Date("2024-11-01T00:00:00Z");
+const END_DATE = new Date("2025-03-31T23:59:59Z");
 
-function randomDateBetween(start, end) {	
+function randomDateBetween(start, end) {
 	return new Date(
 		start.getTime() + Math.random() * (end.getTime() - start.getTime())
 	);
@@ -30,18 +30,13 @@ function randomDateBetween(start, end) {
 
 export async function seedUsersWithProfiles(count = 100) {
 	const users = [];
-	// const freelancerProfiles = [];
-	// const clientProfiles = [];
-
-	// // Calculate distribution: 75% freelancers, 25% clients
-	// const numClients = Math.floor(count * 0.25);
-	// const numFreelancers = count - numClients;
-
-	// console.log(
-	// 	`Seeding ${numFreelancers} freelancers and ${numClients} clients...`
-	// );
 
 	console.log(`Seeding ${count} users...`);
+
+	const AdminCount = 1;
+	const RiderCount = 25;
+	const PartnerCount = 10;
+	const CustomerCount = count - AdminCount - RiderCount - PartnerCount;
 
 	// Generate users with profiles
 	for (let i = 0; i < count; i++) {
@@ -54,7 +49,7 @@ export async function seedUsersWithProfiles(count = 100) {
 			phone: faker.phone.number(),
 			username: faker.person.fullName(),
 			password: "password123",
-			user_type: userType,
+			// user_type: userType,
 			status: faker.helpers.arrayElement(ACCOUNT_STATUSES),
 			created_at: createdAt.toISOString(),
 			updated_at: updatedAt.toISOString(),
@@ -65,44 +60,60 @@ export async function seedUsersWithProfiles(count = 100) {
 		};
 
 		users.push(user);
+	}
 
-		// Create corresponding profile based on user type
-		// if (userType === 'freelancer') {
-		// 	// Select random skills for this freelancer
-		// 	const selectedSkills = faker.helpers.arrayElements(ALL_SKILLS, {
-		// 		min: 2,
-		// 		max: 8,
-		// 	});
+	// Create Admin Profile
+	const adminProfile = {
+		first_name: faker.person.firstName(),
+		last_name: faker.person.lastName(),
+		dob: faker.date.dob(),
+		gender: faker.gender(),
+		photo_url: faker.image.urlPicsumPhotos()
+	}
 
-		// 	freelancerProfiles.push({
-		// 		name: faker.person.fullName(),
-		// 		location: faker.location.city(),
-		// 		hourly_rate: faker.helpers.rangeToNumber({ min: 10, max: 200 }),
-		// 		is_available: faker.datatype.boolean(),
-		// 		portfolio: {
-		// 			projects: faker.helpers.rangeToNumber({ min: 0, max: 20 }),
-		// 			experience_years: faker.helpers.rangeToNumber({ min: 1, max: 15 }),
-		// 			completed_projects: faker.helpers.rangeToNumber({ min: 0, max: 50 }),
-		// 		},
-		// 		skills: selectedSkills, // Array of skill names for JSONB
-		// 		skillIds: [], // Will be populated with actual skill IDs
-		// 	});
-		// } else {
-		// 	clientProfiles.push({
-		// 		company_name: faker.company.name(),
-		// 		description: faker.company.catchPhrase(),
-		// 		location: faker.location.city(),
-		// 		contact_info: {
-		// 			phone: faker.phone.number(),
-		// 			website: faker.internet.url(),
-		// 			linkedin: faker.internet.url(),
-		// 		},
-		// 	});
-		// }
+	//   Create Rider Profile
+	const riderProfile = []
+	for (let i = 0; i < RiderCount; i++) {
+		riderProfile.push({
+			first_name: faker.person.firstName(),
+			last_name: faker.person.lastName(),
+			dob: faker.date.dob(),
+			gender: faker.gender(),
+			photo_url: faker.image.urlPicsumPhotos(),
+			licence_numer: faker.licence_numer(),
+			vehicle_registration_number: faker.vehicle.vrm(),
+			rating: faker.number.float({ multipleOf: 0.25, min: 0, max:5 })
+		})
+	}
+
+	// create Partner Profile
+	const partnerProfile = []
+	for (let i = 0; i < PartnerCount; i++) {
+		partnerProfile.push({
+			first_name: faker.person.firstName(),
+			last_name: faker.person.lastName(),
+			dob: faker.date.dob(),
+			gender: faker.gender(),
+			photo_url: faker.image.urlPicsumPhotos(),
+			restaurant_type: faker.food.ethnicCategory(),
+			contact_number: faker.phone.number({ style: 'international' })
+		})
+	}
+
+	// create customer profile
+	const customerProfile = []
+	for (let i = 0; i < CustomerCount; i++) {
+		customerProfile.push({
+			first_name: faker.person.firstName(),
+			last_name: faker.person.lastName(),
+			dob: faker.date.dob(),
+			gender: faker.gender(),
+			photo_url: faker.image.urlPicsumPhotos()
+		})
 	}
 
 	if (users.length === 0) {
-		console.log('No users to insert.');
+		console.log("No users to insert.");
 		return;
 	}
 
@@ -110,9 +121,9 @@ export async function seedUsersWithProfiles(count = 100) {
 		await db.user.createMany({
 			data: users,
 		});
-		console.log('✅ Successfully seeded users with profiles and skills!');
+		console.log("✅ Successfully seeded users with profiles and skills!");
 	} catch (error) {
-		console.error('❌ Error seeding users:', error);
+		console.error("❌ Error seeding users:", error);
 		throw error;
 	}
 }
