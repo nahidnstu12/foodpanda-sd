@@ -1,12 +1,13 @@
 {
   "name": "foodpanda-sd",
-  "module": "index.ts",
+  "module": "src/index.mjs",
   "type": "module",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.mjs",
-    "dev": "nodemon src/index.mjs"
+    "dev": "nodemon src/index.mjs",
+    "seed": "bun run src/index.mjs"
   },
   "devDependencies": {
     "@types/bun": "latest",

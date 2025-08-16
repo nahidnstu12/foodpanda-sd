@@ -1,18 +1,25 @@
 import { seedUsersWithProfiles } from "./seed/user.mjs";
 import { db } from "./prisma.mjs";
+import { seedRolesAndPermissions } from "./seed/permission_role.mjs";
 
 
 (async function main() {
 	// truncate all tables
 	await db.$transaction(async (tx) => {
 		console.log("Truncating all tables (User)");
+		await tx.adminProfile.deleteMany();
+		await tx.customerProfile.deleteMany();
+		await tx.riderProfile.deleteMany();
+		await tx.partnerProfile.deleteMany();
 		await tx.user.deleteMany();
+		
 		console.log("Tables truncated successfully");
 	});
 
 	// Seed skills
-	// await seedSkills();
-	await seedUsersWithProfiles(5);
+	await seedRolesAndPermissions()
+	await seedUsersWithProfiles(100);
+	
 
 
 })();

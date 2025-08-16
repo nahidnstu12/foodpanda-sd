@@ -58,7 +58,7 @@ model CustomerProfile {
   user_id    String  @unique
   first_name String
   last_name  String
-  dob        String
+  dob        DateTime
   gender     String?
   photo_url  String?
 
@@ -71,7 +71,7 @@ model AdminProfile {
   user_id    String  @unique
   first_name String
   last_name  String
-  dob        String
+  dob        DateTime
   gender     String?
   photo_url  String?
 
@@ -85,7 +85,7 @@ model RiderProfile {
   user_id                     String  @unique
   first_name                  String
   last_name                   String
-  dob                         String
+  dob                         DateTime
   gender                      String?
   photo_url                   String?
   license_number              String?

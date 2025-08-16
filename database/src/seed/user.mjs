@@ -1,129 +1,208 @@
-import { faker } from "@faker-js/faker";
-import { db } from "../prisma.mjs";
-import { UserType, UserStatus } from "../../generated/prisma/index.js";
+import { faker } from '@faker-js/faker';
+import { UserStatus } from '../../generated/prisma/index.js';
+import { db } from '../prisma.mjs';
 /**
  * 
-USER (
-id PK,
-username,
-email UNIQUE,
-phone UNIQUE,
-password_hash,
-status, -- e.g., 'active', 'suspended', 'pending_verification'
-is_email_verified,
-is_phone_verified,
-created_at,
-updated_at,
-deleted_at
-)
+
  */
 const ACCOUNT_STATUSES = Object.values(UserStatus);
-const USER_TYPES = Object.values(UserType);
-const START_DATE = new Date("2024-11-01T00:00:00Z");
-const END_DATE = new Date("2025-03-31T23:59:59Z");
+const START_DATE = new Date('2024-11-01T00:00:00Z');
+const END_DATE = new Date('2025-03-31T23:59:59Z');
 
 function randomDateBetween(start, end) {
-	return new Date(
-		start.getTime() + Math.random() * (end.getTime() - start.getTime())
-	);
+  return new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime())
+  );
+}
+
+async function generateUniqueUserData(existingEmails, existingPhones) {
+  let email;
+  let phone;
+
+  // Generate unique email
+  do {
+    email = faker.internet.email();
+  } while (existingEmails.has(email));
+  existingEmails.add(email);
+
+  // Generate unique phone (nullable)
+  if (faker.datatype.boolean()) {
+    do {
+      phone = faker.phone.number();
+    } while (existingPhones.has(phone));
+    existingPhones.add(phone);
+  } else {
+    phone = null;
+  }
+
+  // Generate timestamps
+  const createdAt = randomDateBetween(START_DATE, END_DATE);
+  const updatedAt = randomDateBetween(createdAt, END_DATE);
+
+  return {
+    email,
+    phone,
+    username: faker.person.fullName(),
+    password: '$2a$10$Bb9ymnS87EfBLC3GXf9/Huk5/og4u8lVOaVUYk7QiSjyNW58S5W62',
+    status: faker.helpers.arrayElement(ACCOUNT_STATUSES),
+    created_at: createdAt,
+    updated_at: updatedAt,
+    is_email_verified: faker.datatype.boolean(),
+    is_phone_verified: phone ? faker.datatype.boolean() : false,
+    deleted_at: null,
+  };
 }
 
 export async function seedUsersWithProfiles(count = 100) {
-	const users = [];
+  const existingEmails = new Set();
+  const existingPhones = new Set();
 
-	console.log(`Seeding ${count} users...`);
+  const superadminRole = await db.role.findUnique({where: {key: "SUPER_ADMIN"}})
+  const adminRole = await db.role.findUnique({where: {key: "ADMIN"}})
+  const riderRole = await db.role.findUnique({where: {key: "RIDER"}})
+  const partnerRole = await db.role.findUnique({where: {key: "PARTNER"}})
+  const customerRole = await db.role.findUnique({where: {key: "CUSTOMER"}})
 
-	const AdminCount = 1;
-	const RiderCount = 25;
-	const PartnerCount = 10;
-	const CustomerCount = count - AdminCount - RiderCount - PartnerCount;
+  
 
-	// Generate users with profiles
-	for (let i = 0; i < count; i++) {
-		const createdAt = randomDateBetween(START_DATE, END_DATE);
-		const updatedAt = randomDateBetween(createdAt, END_DATE);
-		const userType = faker.helpers.arrayElement(USER_TYPES);
+  console.log(`Seeding ${count} users...`);
 
-		const user = {
-			email: faker.internet.email(),
-			phone: faker.phone.number(),
-			username: faker.person.fullName(),
-			password: "password123",
-			// user_type: userType,
-			status: faker.helpers.arrayElement(ACCOUNT_STATUSES),
-			created_at: createdAt.toISOString(),
-			updated_at: updatedAt.toISOString(),
-			// average_rating: faker.helpers.rangeToNumber({ min: 1, max: 5 }),
-			is_email_verified: faker.datatype.boolean(),
-			is_phone_verified: faker.datatype.boolean(),
-			deleted_at: null,
-		};
+  const AdminCount = 5;
+  const SuperAdminCount = 1;
+  const RiderCount = 25;
+  const PartnerCount = 10;
+  const CustomerCount = count - SuperAdminCount - AdminCount - RiderCount - PartnerCount;
 
-		users.push(user);
-	}
+  try {
+    // Generate Admin (using CustomerProfile for simplicity)
+    const adminData = await generateUniqueUserData(
+      existingEmails,
+      existingPhones
+    );
+    await db.$transaction([
+      db.user.create({
+        data: {
+          ...adminData,
+          status: UserStatus.ACTIVE, // Admins are typically active
+          customer_profile: {
+            create: {
+              first_name: faker.person.firstName(),
+              last_name: faker.person.lastName(),
+              dob: faker.date.birthdate().toISOString(),
+              gender: faker.person.gender(),
+              photo_url: faker.image.urlPicsumPhotos(),
+            },
+          },
+		  user_roles: {
+			connect: [{id: superadminRole.id}]
+		  }
+        },
+      }),
+    ]);
 
-	// Create Admin Profile
-	const adminProfile = {
-		first_name: faker.person.firstName(),
-		last_name: faker.person.lastName(),
-		dob: faker.date.dob(),
-		gender: faker.gender(),
-		photo_url: faker.image.urlPicsumPhotos()
-	}
+	    //     // create admin profile
+		for (let i = 0; i < AdminCount; i++) {
+			const userData = await generateUniqueUserData(
+			  existingEmails,
+			  existingPhones
+			);
+			await db.user.create({
+			  data: {
+				...userData,
+				admin_profile: {
+				  create: {
+					  first_name: faker.person.firstName(),
+					  last_name: faker.person.lastName(),
+					  dob: faker.date.birthdate().toISOString(),
+					  gender: faker.person.gender(),
+					  photo_url: faker.image.urlPicsumPhotos(),
+				  },
+				},
+				user_roles: {
+					connect: [{id: adminRole.id}]
+				  }
+			  },
+			});
+		  }
 
-	//   Create Rider Profile
-	const riderProfile = []
-	for (let i = 0; i < RiderCount; i++) {
-		riderProfile.push({
-			first_name: faker.person.firstName(),
-			last_name: faker.person.lastName(),
-			dob: faker.date.dob(),
-			gender: faker.gender(),
-			photo_url: faker.image.urlPicsumPhotos(),
-			licence_numer: faker.licence_numer(),
-			vehicle_registration_number: faker.vehicle.vrm(),
-			rating: faker.number.float({ multipleOf: 0.25, min: 0, max:5 })
-		})
-	}
+    //     // create rider profile
+    for (let i = 0; i < RiderCount; i++) {
+      const userData = await generateUniqueUserData(
+        existingEmails,
+        existingPhones
+      );
+      await db.user.create({
+        data: {
+          ...userData,
+          rider_profile: {
+            create: {
+              first_name: faker.person.firstName(),
+              last_name: faker.person.lastName(),
+              dob: faker.date.birthdate().toISOString(),
+              gender: faker.person.gender(),
+              photo_url: faker.image.urlPicsumPhotos(),
+              license_number: faker.vehicle.vin(),
+              vehicle_registration_number: faker.vehicle.vrm(),
+              rating: faker.number.float({ multipleOf: 0.25, min: 0, max: 5 }),
+            },
+          },
+		  user_roles: {
+			connect: [{id: riderRole.id}]
+		  }
+        },
+      });
+    }
 
-	// create Partner Profile
-	const partnerProfile = []
-	for (let i = 0; i < PartnerCount; i++) {
-		partnerProfile.push({
-			first_name: faker.person.firstName(),
-			last_name: faker.person.lastName(),
-			dob: faker.date.dob(),
-			gender: faker.gender(),
-			photo_url: faker.image.urlPicsumPhotos(),
-			restaurant_type: faker.food.ethnicCategory(),
-			contact_number: faker.phone.number({ style: 'international' })
-		})
-	}
+    //     // create partner profile
+    for (let i = 0; i < PartnerCount; i++) {
+      const userData = await generateUniqueUserData(
+        existingEmails,
+        existingPhones
+      );
+      await db.user.create({
+        data: {
+          ...userData,
+          partner_profile: {
+            create: {
+              company_name: faker.company.name(),
+              restaurant_type: faker.food.ethnicCategory(),
+              contact_number: faker.phone.number({ style: 'international' }),
+            },
+          },
+		  user_roles: {
+			connect: [{id: partnerRole.id}]
+		  }
+        },
+      });
+    }
+    //     // create customer profile
+    for (let i = 0; i < CustomerCount; i++) {
+      const userData = await generateUniqueUserData(
+        existingEmails,
+        existingPhones
+      );
+      await db.user.create({
+        data: {
+          ...userData,
+          customer_profile: {
+            create: {
+              first_name: faker.person.firstName(),
+              last_name: faker.person.lastName(),
+              dob: faker.date.birthdate().toISOString(),
+              gender: faker.person.gender(),
+              photo_url: faker.image.urlPicsumPhotos(),
+            },
+          },
+		  user_roles: {
+			connect: [{id: customerRole.id}]
+		  }
+        },
+      });
+    }
 
-	// create customer profile
-	const customerProfile = []
-	for (let i = 0; i < CustomerCount; i++) {
-		customerProfile.push({
-			first_name: faker.person.firstName(),
-			last_name: faker.person.lastName(),
-			dob: faker.date.dob(),
-			gender: faker.gender(),
-			photo_url: faker.image.urlPicsumPhotos()
-		})
-	}
-
-	if (users.length === 0) {
-		console.log("No users to insert.");
-		return;
-	}
-
-	try {
-		await db.user.createMany({
-			data: users,
-		});
-		console.log("✅ Successfully seeded users with profiles and skills!");
-	} catch (error) {
-		console.error("❌ Error seeding users:", error);
-		throw error;
-	}
+    console.log('✅ Successfully seeded users with profiles!');
+  } catch (error) {
+    console.error('❌ Error seeding users:', error);
+    throw error;
+  }
 }
