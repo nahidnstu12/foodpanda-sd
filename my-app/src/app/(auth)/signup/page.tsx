@@ -24,6 +24,11 @@ export default function SignUpPage() {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    console.log({
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      password: formData.get('password') as string,
+    });
 
     const res = await signUp.email({
       name: formData.get('name') as string,
