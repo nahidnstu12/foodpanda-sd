@@ -28,6 +28,7 @@ export async function signUpAction(formData: FormData): Promise<ActionResult> {
 
     // Validate required fields
     if (!name || !email || !password || !user_type) {
+      console.log("All fields are required");
       return {
         success: false,
         error: "All fields are required",

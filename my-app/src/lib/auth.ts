@@ -39,15 +39,15 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 1, // 1 days
   },
-  // logger: {
-  //   disabled: false,
-  //   level: "error",
-  //   log: (level, message, ...args) => {
-  //     console.log(`[${level}] ${message}`, ...args);
-  //   },
-  // },
   logger: {
     disabled: false,
-    level: "info",
+    level: "error",
+    log: (level, message, ...args) => {
+      console.log(`[${level}] ${message}`, ...args);
+    },
   },
+  // logger: {
+  //   disabled: false,
+  //   level: "info",
+  // },
 });
