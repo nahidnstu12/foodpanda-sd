@@ -14,35 +14,41 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signUp } from '@/lib/auth-client';
+import { useTransition } from 'react';
+import { signUpAction } from '@/actions/auth';
 
 export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    console.log({
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
+    
+    startTransition(async () => {
+      try {
+        const result = await signUpAction(formData);
+        
+        if (result.success) {
+          console.log('Signup successful:', result.data);
+          setSuccess(true);
+          
+          // Redirect after showing success message
+          setTimeout(() => {
+            router.push('/sign-in?message=Account created successfully');
+          }, 2000);
+        } else {
+          setError(result.error || 'Something went wrong');
+        }
+      } catch (err) {
+        console.error('Form submission error:', err);
+        setError('An unexpected error occurred. Please try again.');
+      }
     });
-
-    const res = await signUp.email({
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
-    });
-    console.log(res);
-
-    if (res.error) {
-      console.log(res.error);
-      setError(res.error.message || 'Something went wrong.');
-    } else {
-      router.push('/dashboard');
-    }
   }
 
   return (
@@ -73,6 +79,11 @@ export default function SignUpPage() {
           minLength={8}
           className="w-full rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2"
         />
+        <select name="user_type" id="user_type" className="w-full rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2">
+          <option value="CUSTOMER">Customer</option>
+          <option value="RIDER">Rider</option>
+          <option value="PARTNER">Partner</option>
+        </select>
         <button
           type="submit"
           className="w-full bg-white text-black font-medium rounded-md px-4 py-2 hover:bg-gray-200"

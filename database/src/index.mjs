@@ -18,7 +18,7 @@ import { seedRolesAndPermissions } from "./seed/permission_role.mjs";
 
 	// Seed skills
 	await seedRolesAndPermissions()
-	await seedUsersWithProfiles(100);
+	// await seedUsersWithProfiles(100);
 	
 
 
