@@ -1,4 +1,5 @@
 export const signupDefaultValues = {
+  name: "",
   email: "",
   password: "",
   user_type: "",

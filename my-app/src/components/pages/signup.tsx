@@ -1,27 +1,41 @@
 "use client";
 
+import { signUpAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { signupDefaultValues, userTypeOptions } from "@/helpers/default-data";
 import { signupFormSchema } from "@/schema/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { FormProvider as FormProviderRHF, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { FormInput } from "../form/form-input";
 import { FormPasswordInput } from "../form/form-password-input";
-import FormProvider from "../form/form-provider";
 import { FormSelect } from "../form/form-select";
-import { signUpAction } from "@/actions/auth";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner"; 
 
 export default function Signup() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (formData: FormData) => {
-    const formDataObject = Object.fromEntries(formData);
-    console.log("Form data:", formDataObject);
-    return await signUpAction(formData);
+  const [isPending, startTransition] = useTransition();
+
+  const methods = useForm({
+    resolver: zodResolver(signupFormSchema),
+    defaultValues: signupDefaultValues,
+  });
+
+  const handleSubmit = async (data: any) => {
+    console.log("Form data:", data);
+    startTransition(async () => {
+      const result = await signUpAction(data);
+      if (result.success) {
+        handleSuccess(result.data);
+      } else {
+        handleError(result.error || "Something went wrong");
+      }
+    });
   };
 
   const handleSuccess = (data: any) => {
@@ -34,7 +48,7 @@ export default function Signup() {
 
     // Redirect after a short delay
     setTimeout(() => {
-      router.push("/login?message=Account created successfully");
+      router.push("/login");
     }, 2000);
   };
 
@@ -133,7 +147,7 @@ export default function Signup() {
     <div className="w-full max-w-md m-auto space-y-4 shadow p-8 bg-yellow-50 rounded-md">
       <div className="text-2xl font-bold text-center mb-4">Create Account</div>
 
-      <FormProvider
+      {/* <FormProvider
         onSubmit={handleSubmit}
         resolver={zodResolver(signupFormSchema)}
         defaultValues={signupDefaultValues}
@@ -142,16 +156,21 @@ export default function Signup() {
         onError={handleError}
       >
         <FormContent isPending={false} />
-      </FormProvider>
+      </FormProvider> */}
+      <FormProviderRHF {...methods}>
+        <form onSubmit={methods.handleSubmit(handleSubmit)}>
+          <FormContent isPending={isPending} />
+        </form>
+      </FormProviderRHF>
 
       <div className="text-center text-sm text-gray-600">
         Already have an account?{" "}
-        <a
+        <Link
           href="/login"
           className="text-blue-600 hover:underline font-medium"
         >
           Sign In
-        </a>
+        </Link>
       </div>
     </div>
   );

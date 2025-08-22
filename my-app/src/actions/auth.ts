@@ -18,13 +18,17 @@ interface ActionResult {
   error?: string;
   data?: any;
 }
+export type LoginState = {
+  success: boolean;
+  message: string;
+};
 
-export async function signUpAction(formData: FormData): Promise<ActionResult> {
+export async function signUpAction(data: any): Promise<ActionResult> {
   try {
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const user_type = formData.get("user_type") as string;
+    const name = data.name;
+    const email = data.email;
+    const password = data.password;
+    const user_type = data.user_type || "CUSTOMER";
 
     // Validate required fields
     if (!name || !email || !password || !user_type) {
@@ -253,4 +257,62 @@ export async function signUpWithRedirectAction(formData: FormData) {
   }
 
   return result;
+}
+
+export async function loginAction(
+  prevState: LoginState,
+  formData: FormData
+): Promise<LoginState> {
+  const email = (formData.get("email") as string | null)?.trim();
+  const password = formData.get("password") as string | null;
+
+  console.log("loginAction>>", email, password);
+
+  // --- Better Validation ---
+  if (!email || !password) {
+    return { success: false, message: "Email and password are required." };
+  }
+  if (password.length < 8) {
+    return {
+      success: false,
+      message: "Password must be at least 8 characters.",
+    };
+  }
+
+  try {
+    const result = await auth.api.signInEmail({
+      body: { email, password },
+    });
+
+    if (!result?.user) {
+      // Handle cases where the API returns a 200 OK but no user (unlikely but safe)
+      return { success: false, message: "Invalid email or password." };
+    }
+  } catch (e: any) {
+    // Handle actual API errors (e.g., 401 Unauthorized)
+    // Important: Don't re-throw redirect errors!
+    if (e.message === "NEXT_REDIRECT") {
+      throw e;
+    }
+    // You can inspect the error from your auth library to give more specific messages
+    console.error("Login Error:", e);
+    return {
+      success: false,
+      message: e.message || "Invalid email or password.",
+    };
+  }
+
+  // --- Success Case ---
+  // On successful login, we still redirect.
+  redirect("/dashboard");
+
+  // Note: redirect() throws an exception, so code below it won't run.
+  // The return type is still required by TypeScript.
+  // We won't actually hit this return statement.
+  return { success: true, message: "Login successful!" };
+}
+
+export async function clearError() {
+  "use server";
+  redirect("/login");
 }
