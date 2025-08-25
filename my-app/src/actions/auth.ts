@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
+import { sendEmail } from "./send-email";
 
 interface SignUpData {
   name: string;
@@ -93,13 +94,15 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     await createUserProfile(userId, user_type);
 
     // Send welcome email (don't wait for it)
-    // sendWelcomeEmail({
-    //   to: email,
+    // sendEmail({
     //   name,
-    //   userType: user_type,
+    //   message: "Welcome to the platform! Please login to continue.",
+    //   email,
     // }).catch((error) => {
-    //   console.error('Failed to send welcome email:', error);
+    //   console.error("Failed to send welcome email:", error);
     // });
+
+    
 
     // Revalidate any cached data
     revalidatePath("/");

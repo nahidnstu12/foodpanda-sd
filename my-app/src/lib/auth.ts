@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "../../generated/prisma";
+import { sendEmail } from "@/actions/send-email";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +11,16 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    // requireEmailVerification: false,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url, token }, request) => {
+      await sendEmail({
+        name: user.name,
+        email: user.email,
+        message: `Click the link to verify your email: ${url}`,
+      });
+    },
   },
   user: {
     additionalFields: {
@@ -19,7 +29,7 @@ export const auth = betterAuth({
         defaultValue: "INACTIVE",
       },
       is_phone_verified: {
-        type: "boolean", 
+        type: "boolean",
         defaultValue: false,
       },
       phone: {
