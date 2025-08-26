@@ -5,7 +5,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
-import { sendEmail } from "./send-email";
+import { sendEmail, sendWelcomeEmail } from "./send-email";
+import { loginFormSchema } from "@/schema/auth";
 
 interface SignUpData {
   name: string;
@@ -94,15 +95,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     await createUserProfile(userId, user_type);
 
     // Send welcome email (don't wait for it)
-    // sendEmail({
-    //   name,
-    //   message: "Welcome to the platform! Please login to continue.",
-    //   email,
-    // }).catch((error) => {
-    //   console.error("Failed to send welcome email:", error);
-    // });
-
-    
+    sendWelcomeEmail(email, name);
 
     // Revalidate any cached data
     revalidatePath("/");
@@ -272,19 +265,20 @@ export async function loginAction(
   console.log("loginAction>>", email, password);
 
   // --- Better Validation ---
-  if (!email || !password) {
-    return { success: false, message: "Email and password are required." };
-  }
-  if (password.length < 8) {
+  const validatedData = loginFormSchema.safeParse({ email, password });
+  if (!validatedData.success) {
     return {
       success: false,
-      message: "Password must be at least 8 characters.",
+      message: validatedData.error.message,
     };
   }
 
   try {
     const result = await auth.api.signInEmail({
-      body: { email, password },
+      body: {
+        email: validatedData.data.email,
+        password: validatedData.data.password,
+      },
     });
 
     if (!result?.user) {

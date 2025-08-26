@@ -27,15 +27,15 @@ export default function page() {
 //     setError(null);
 
 //     const formData = new FormData(e.currentTarget);
-    
+
 //     startTransition(async () => {
 //       try {
 //         const result = await signUpAction(formData);
-        
+
 //         if (result.success) {
 //           console.log('Signup successful:', result.data);
 //           setSuccess(true);
-          
+
 //           // Redirect after showing success message
 //           setTimeout(() => {
 //             router.push('/sign-in?message=Account created successfully');

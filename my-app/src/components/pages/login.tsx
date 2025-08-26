@@ -2,14 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
-import { loginFormSchema } from "@/schema/auth";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { FormInput } from "../form/form-input";
 import { FormPasswordInput } from "../form/form-password-input";
-import FormProvider from "../form/form-provider";
 
 export default function Login() {
   const router = useRouter();

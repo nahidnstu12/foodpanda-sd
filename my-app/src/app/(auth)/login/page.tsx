@@ -5,7 +5,9 @@ import { FormPasswordInputServer } from "@/components/form/form-password-input-s
 import FormSubmitButton from "@/components/form/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getSession, useSession } from "@/lib/auth-client";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { useActionState } from "react";
 
 const initialState = {
@@ -16,6 +18,10 @@ const initialState = {
 export default function Page() {
   const [state, formAction] = useActionState(loginAction, initialState);
 
+  const { data: session } = useSession();
+  if (session) {
+    redirect("/dashboard");
+  }
   return (
     <div className="flex h-screen items-center justify-center">
       <div className="w-full max-w-md m-auto space-y-6 shadow p-8 bg-yellow-50 rounded-md">

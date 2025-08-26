@@ -1,11 +1,13 @@
+import { sendVerificationEmail } from "@/actions/send-email";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "../../generated/prisma";
-import { sendEmail } from "@/actions/send-email";
+import { nextCookies } from "better-auth/next-js";
 
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET!,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -15,11 +17,8 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }, request) => {
-      await sendEmail({
-        name: user.name,
-        email: user.email,
-        message: `Click the link to verify your email: ${url}`,
-      });
+      console.log("Sending verification email", user.email, user.name, url);
+      await sendVerificationEmail(user.email, user.name, url);
     },
   },
   user: {
@@ -56,6 +55,7 @@ export const auth = betterAuth({
       console.log(`[${level}] ${message}`, ...args);
     },
   },
+  plugins: [nextCookies()]
   // logger: {
   //   disabled: false,
   //   level: "info",

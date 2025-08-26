@@ -6,18 +6,24 @@ import { signupDefaultValues, userTypeOptions } from "@/helpers/default-data";
 import { signupFormSchema } from "@/schema/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { FormProvider as FormProviderRHF, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormInput } from "../form/form-input";
 import { FormPasswordInput } from "../form/form-password-input";
 import { FormSelect } from "../form/form-select";
+import { useSession } from "@/lib/auth-client";
 
 export default function Signup() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const { data: session } = useSession();
+  if (session) {
+    redirect("/dashboard");
+  }
 
   const [isPending, startTransition] = useTransition();
 
@@ -147,16 +153,6 @@ export default function Signup() {
     <div className="w-full max-w-md m-auto space-y-4 shadow p-8 bg-yellow-50 rounded-md">
       <div className="text-2xl font-bold text-center mb-4">Create Account</div>
 
-      {/* <FormProvider
-        onSubmit={handleSubmit}
-        resolver={zodResolver(signupFormSchema)}
-        defaultValues={signupDefaultValues}
-        formName="Signup"
-        onSuccess={handleSuccess}
-        onError={handleError}
-      >
-        <FormContent isPending={false} />
-      </FormProvider> */}
       <FormProviderRHF {...methods}>
         <form onSubmit={methods.handleSubmit(handleSubmit)}>
           <FormContent isPending={isPending} />
