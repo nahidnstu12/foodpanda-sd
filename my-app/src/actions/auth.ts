@@ -2,11 +2,11 @@
 
 import { auth } from "@/lib/auth";
 
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
-import { sendEmail, sendWelcomeEmail } from "./send-email";
 import { loginFormSchema } from "@/schema/auth";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { sendWelcomeEmail } from "./send-email";
 
 interface SignUpData {
   name: string;

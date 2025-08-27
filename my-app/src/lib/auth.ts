@@ -3,6 +3,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "../../generated/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { customSession } from "better-auth/plugins";
+import { findUserRoles } from "@/actions/user";
 
 const prisma = new PrismaClient();
 
@@ -55,7 +57,20 @@ export const auth = betterAuth({
       console.log(`[${level}] ${message}`, ...args);
     },
   },
-  plugins: [nextCookies()]
+  plugins: [
+    customSession(async ({ user, session }) => {
+      const roles = await findUserRoles(session?.userId || "");
+      // console.log("roles", { roles, user, session });
+      return {
+        user: {
+          ...user,
+          ...roles.data,
+        },
+        session,
+      };
+    }),
+    nextCookies(),
+  ],
   // logger: {
   //   disabled: false,
   //   level: "info",
