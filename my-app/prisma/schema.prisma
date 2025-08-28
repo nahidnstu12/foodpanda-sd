@@ -28,37 +28,12 @@ enum UserStatus {
   SUSPENDED
 }
 
-// model User {
-//   id                String     @id @default(uuid())
-//   name              String     @unique // Required by Better Auth
-//   email             String     @unique
-//   phone             String?    @unique
-//   password          String
-//   status            UserStatus @default(INACTIVE)
-//   is_email_verified Boolean    @default(false)
-//   is_phone_verified Boolean    @default(false)
-//   created_at        DateTime   @default(now())
-//   updated_at        DateTime   @updatedAt
-//   deleted_at        DateTime?
-
-//   customer_profile CustomerProfile?
-//   rider_profile    RiderProfile?
-//   partner_profile  PartnerProfile?
-//   admin_profile    AdminProfile?
-//   user_roles       Role[]           @relation("user_role")
-//   address          Address[]
-//   sessions         Session[]
-//   accounts         Account[]
-
-//   @@index([status])
-//   @@map("users")
-// }
 model User {
   id                String     @id @default(cuid()) // Better Auth prefers cuid
   name              String
   email             String     @unique
   phone             String?    @unique
-  password          String?    // Make optional for OAuth users
+  password          String? // Make optional for OAuth users
   status            UserStatus @default(INACTIVE)
   emailVerified     Boolean    @default(false) @map("is_email_verified")
   is_phone_verified Boolean    @default(false)
@@ -94,20 +69,20 @@ model Session {
 }
 
 model Account {
-  id                String    @id @default(cuid())
-  accountId         String    @map("account_id")
-  providerId        String    @map("provider_id")
-  userId            String    @map("user_id")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken       String?   @map("access_token")
-  refreshToken      String?   @map("refresh_token")
-  idToken           String?   @map("id_token")
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
   accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
-  scope             String?
-  password          String?
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   @@map("account")
 }
@@ -124,8 +99,8 @@ model Verification {
 }
 
 model CustomerProfile {
-  id         String   @id @default(uuid())
-  user_id    String   @unique
+  id         String    @id @default(uuid())
+  user_id    String    @unique
   first_name String
   last_name  String
   dob        DateTime?
@@ -138,8 +113,8 @@ model CustomerProfile {
 }
 
 model AdminProfile {
-  id         String   @id @default(uuid())
-  user_id    String   @unique
+  id         String    @id @default(uuid())
+  user_id    String    @unique
   first_name String
   last_name  String
   dob        DateTime?
@@ -152,8 +127,8 @@ model AdminProfile {
 }
 
 model RiderProfile {
-  id                          String   @id @default(uuid())
-  user_id                     String   @unique
+  id                          String    @id @default(uuid())
+  user_id                     String    @unique
   first_name                  String
   last_name                   String
   dob                         DateTime?
@@ -234,61 +209,3 @@ model Address {
   @@index([city, state])
   @@map("addresses")
 }
-
-// model Session {
-//   id         String   @id
-//   expires_at DateTime
-//   token      String
-//   created_at DateTime
-//   updated_at DateTime
-//   ipAddress  String?
-//   userAgent  String?
-//   userId     String
-//   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   expiresAt DateTime
-//   createdAt DateTime
-//   updatedAt DateTime
-
-//   @@unique([token])
-//   @@map("session")
-// }
-
-// model Account {
-//   id                     String    @id
-//   accountId              String
-//   providerId             String
-//   userId                 String
-//   user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   accessToken            String?
-//   refreshToken           String?
-//   idToken                String?
-//   accessTokenExpires_at  DateTime?
-//   refreshTokenExpires_at DateTime?
-//   scope                  String?
-//   password               String?
-//   created_at             DateTime
-//   updated_at             DateTime
-
-//   accessTokenExpiresAt  DateTime?
-//   refreshTokenExpiresAt DateTime?
-//   createdAt             DateTime
-//   updatedAt             DateTime
-
-//   @@map("account")
-// }
-
-// model Verification {
-//   id         String    @id
-//   identifier String
-//   value      String
-//   expires_at DateTime
-//   created_at DateTime?
-//   updated_at DateTime?
-
-//   expiresAt DateTime
-//   createdAt DateTime?
-//   updatedAt DateTime?
-
-//   @@map("verification")
-// }

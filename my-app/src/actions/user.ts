@@ -16,5 +16,10 @@ export async function findUserRoles(userId: string) {
       admin_profile: true,
     },
   });
-  return { success: true, data: user };
+  const userData = {
+    ...user,
+    roles: user?.user_roles.map((role) => role.name),
+    role_id: user?.user_roles[0]?.id,
+  };
+  return { success: true, data: userData };
 }

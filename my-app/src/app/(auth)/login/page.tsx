@@ -5,7 +5,7 @@ import { FormPasswordInputServer } from "@/components/form/form-password-input-s
 import FormSubmitButton from "@/components/form/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSession, useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useActionState } from "react";
