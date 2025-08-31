@@ -1,26 +1,38 @@
-"use client";
+'use client';
 
-import { loginAction } from "@/actions/auth";
-import { FormPasswordInputServer } from "@/components/form/form-password-input-server";
-import FormSubmitButton from "@/components/form/form-submit-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useSession } from "@/lib/auth-client";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { useActionState } from "react";
+import { loginAction } from '@/actions/auth';
+import { FormPasswordInputServer } from '@/components/form/form-password-input-server';
+import FormSubmitButton from '@/components/form/form-submit-button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useSession } from '@/lib/auth-client';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { useActionState } from 'react';
 
 const initialState = {
   success: false,
-  message: "",
+  message: '',
 };
 
 export default function Page() {
   const [state, formAction] = useActionState(loginAction, initialState);
 
   const { data: session } = useSession();
+  // console.log('login page session>>', session, state);
   if (session) {
-    redirect("/dashboard");
+    // console.log('session.user.roles>>', session.user.roles[0]);
+    const redirectTo =
+      session.user.roles[0] === 'SUPER_ADMIN'
+        ? '/dashboard/super-admin'
+        : session.user.roles[0] === 'ADMIN'
+        ? '/dashboard/admin'
+        : session.user.roles[0] === 'PARTNER'
+        ? '/dashboard/partner'
+        : session.user.roles[0] === 'RIDER'
+        ? '/dashboard/rider'
+        : '/dashboard/customer';
+    redirect(redirectTo);
   }
   return (
     <div className="flex h-screen items-center justify-center">
@@ -62,7 +74,7 @@ export default function Page() {
         </form>
 
         <div className="text-center text-sm text-gray-600">
-          Don't have an account?{" "}
+          Don't have an account?{' '}
           <Link
             href="/signup"
             className="text-blue-600 hover:underline font-medium"

@@ -1,12 +1,14 @@
-"use server";
+'use server';
 
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
 
-import db from "@/lib/prisma";
-import { loginFormSchema } from "@/schema/auth";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { sendWelcomeEmail } from "./send-email";
+import db from '@/lib/prisma';
+import { loginFormSchema } from '@/schema/auth';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { sendWelcomeEmail } from './send-email';
+import { UserRole } from '@/helpers/user.enum';
+import { headers } from 'next/headers';
 
 interface SignUpData {
   name: string;
@@ -30,23 +32,28 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     const name = data.name;
     const email = data.email;
     const password = data.password;
-    const user_type = data.user_type || "CUSTOMER";
+    const user_type = data.user_type || UserRole.CUSTOMER;
 
     // Validate required fields
     if (!name || !email || !password || !user_type) {
-      console.log("All fields are required");
+      console.log('All fields are required');
       return {
         success: false,
-        error: "All fields are required",
+        error: 'All fields are required',
       };
     }
 
     // Validate user_type
-    const validUserTypes = ["customer", "rider", "partner", "admin"];
-    if (!validUserTypes.includes(user_type.toLowerCase())) {
+    const validUserTypes = [
+      UserRole.CUSTOMER,
+      UserRole.RIDER,
+      UserRole.PARTNER,
+      UserRole.ADMIN,
+    ];
+    if (!validUserTypes.includes(user_type as UserRole)) {
       return {
         success: false,
-        error: "Invalid user type selected",
+        error: 'Invalid user type selected',
       };
     }
 
@@ -54,7 +61,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (password.length < 8) {
       return {
         success: false,
-        error: "Password must be at least 8 characters long",
+        error: 'Password must be at least 8 characters long',
       };
     }
 
@@ -66,7 +73,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (existingUser) {
       return {
         success: false,
-        error: "An account with this email already exists",
+        error: 'An account with this email already exists',
       };
     }
 
@@ -82,7 +89,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (!signUpResult || !signUpResult.user) {
       return {
         success: false,
-        error: "Failed to create user account",
+        error: 'Failed to create user account',
       };
     }
 
@@ -95,10 +102,10 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     await createUserProfile(userId, user_type);
 
     // Send welcome email (don't wait for it)
-    sendWelcomeEmail(email, name);
+    // sendWelcomeEmail(email, name);
 
     // Revalidate any cached data
-    revalidatePath("/");
+    revalidatePath('/');
 
     return {
       success: true,
@@ -112,10 +119,10 @@ export async function signUpAction(data: any): Promise<ActionResult> {
       },
     };
   } catch (error) {
-    console.error("Signup action error:", error);
+    console.error('Signup action error:', error);
     return {
       success: false,
-      error: "An unexpected error occurred. Please try again.",
+      error: 'An unexpected error occurred. Please try again.',
     };
   }
 }
@@ -125,13 +132,13 @@ async function assignUserRole(userId: string, userType: string) {
   try {
     // Map user_type to role key
     const roleKeyMap: Record<string, string> = {
-      customer: "customer",
-      rider: "rider",
-      partner: "partner",
-      admin: "admin",
+      CUSTOMER: UserRole.CUSTOMER,
+      RIDER: UserRole.RIDER,
+      PARTNER: UserRole.PARTNER,
+      ADMIN: UserRole.ADMIN,
     };
 
-    const roleKey = roleKeyMap[userType.toLowerCase()];
+    const roleKey = roleKeyMap[userType as UserRole];
     if (!roleKey) {
       console.warn(`Unknown user_type: ${userType}`);
       return;
@@ -147,7 +154,8 @@ async function assignUserRole(userId: string, userType: string) {
       // Create the role if it doesn't exist
       const newRole = await db.role.create({
         data: {
-          name: roleKey.charAt(0).toUpperCase() + roleKey.slice(1),
+          name:
+            roleKey.charAt(0).toUpperCase() + roleKey.slice(1).toLowerCase(),
           key: roleKey,
           description: `${roleKey} role`,
         },
@@ -176,7 +184,7 @@ async function assignUserRole(userId: string, userType: string) {
 
     console.log(`Assigned role ${roleKey} to user ${userId}`);
   } catch (error) {
-    console.error("Error assigning user role:", error);
+    console.error('Error assigning user role:', error);
     throw error; // Re-throw to handle in main function
   }
 }
@@ -186,24 +194,24 @@ async function createUserProfile(userId: string, userType: string) {
   try {
     const profileData = {
       user_id: userId,
-      first_name: "",
-      last_name: "",
+      first_name: '',
+      last_name: '',
       dob: null,
       gender: null,
       photo_url: null,
     };
 
-    console.log("createUserProfile>>", userType);
+    console.log('createUserProfile>>', userType);
 
-    switch (userType.toLowerCase()) {
-      case "customer":
+    switch (userType) {
+      case UserRole.CUSTOMER:
         await db.customerProfile.create({
           data: profileData,
         });
         console.log(`Created customer profile for user ${userId}`);
         break;
 
-      case "rider":
+      case UserRole.RIDER:
         await db.riderProfile.create({
           data: {
             ...profileData,
@@ -215,11 +223,11 @@ async function createUserProfile(userId: string, userType: string) {
         console.log(`Created rider profile for user ${userId}`);
         break;
 
-      case "partner":
+      case UserRole.PARTNER:
         await db.partnerProfile.create({
           data: {
             owner_user_id: userId,
-            company_name: "",
+            company_name: '',
             tax_id: null,
             restaurant_type: null,
             contact_number: null,
@@ -228,7 +236,7 @@ async function createUserProfile(userId: string, userType: string) {
         console.log(`Created partner profile for user ${userId}`);
         break;
 
-      case "admin":
+      case UserRole.ADMIN:
         await db.adminProfile.create({
           data: profileData,
         });
@@ -239,7 +247,7 @@ async function createUserProfile(userId: string, userType: string) {
         console.warn(`Unknown user_type for profile creation: ${userType}`);
     }
   } catch (error) {
-    console.error("Error creating user profile:", error);
+    console.error('Error creating user profile:', error);
     throw error; // Re-throw to handle in main function
   }
 }
@@ -249,7 +257,7 @@ export async function signUpWithRedirectAction(formData: FormData) {
   const result = await signUpAction(formData);
 
   if (result.success) {
-    redirect("/sign-in?message=Account created successfully");
+    redirect('/sign-in?message=Account created successfully');
   }
 
   return result;
@@ -259,10 +267,11 @@ export async function loginAction(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const email = (formData.get("email") as string | null)?.trim();
-  const password = formData.get("password") as string | null;
+  const email = (formData.get('email') as string | null)?.trim();
+  const password = formData.get('password') as string | null;
+  let result: any;
 
-  console.log("loginAction>>", email, password);
+  console.log('loginAction>>', email, password);
 
   // --- Better Validation ---
   const validatedData = loginFormSchema.safeParse({ email, password });
@@ -274,42 +283,63 @@ export async function loginAction(
   }
 
   try {
-    const result = await auth.api.signInEmail({
+    result = await auth.api.signInEmail({
       body: {
         email: validatedData.data.email,
         password: validatedData.data.password,
       },
     });
 
+    console.log('loginAction result>>', result);
+
     if (!result?.user) {
       // Handle cases where the API returns a 200 OK but no user (unlikely but safe)
-      return { success: false, message: "Invalid email or password." };
+      return { success: false, message: 'Invalid email or password.' };
     }
   } catch (e: any) {
     // Handle actual API errors (e.g., 401 Unauthorized)
     // Important: Don't re-throw redirect errors!
-    if (e.message === "NEXT_REDIRECT") {
+    if (e.message === 'NEXT_REDIRECT') {
       throw e;
     }
     // You can inspect the error from your auth library to give more specific messages
-    console.error("Login Error:", e);
+    console.error('Login Error:', e);
     return {
       success: false,
-      message: e.message || "Invalid email or password.",
+      message: e.message || 'Invalid email or password.',
     };
   }
 
   // --- Success Case ---
   // On successful login, we still redirect.
-  redirect("/dashboard");
+  const fetchUserRole = await db.user.findUnique({
+    where: { id: result.user.id },
+    include: { user_roles: true },
+  });
+  const userRole = fetchUserRole?.user_roles[0].key; //TODO: Fix when mulitple role support
+
+  if (userRole) {
+    switch (userRole) {
+      case UserRole.ADMIN:
+        redirect('/dashboard/admin');
+      case UserRole.PARTNER:
+        redirect('/dashboard/partner');
+      case UserRole.RIDER:
+        redirect('/dashboard/rider');
+      case UserRole.CUSTOMER:
+        redirect('/dashboard/customer');
+    }
+  } else {
+    redirect('/dashboard/customer');
+  }
 
   // Note: redirect() throws an exception, so code below it won't run.
   // The return type is still required by TypeScript.
   // We won't actually hit this return statement.
-  return { success: true, message: "Login successful!" };
+  return { success: true, message: 'Login successful!' };
 }
 
 export async function clearError() {
-  "use server";
-  redirect("/login");
+  'use server';
+  redirect('/login');
 }

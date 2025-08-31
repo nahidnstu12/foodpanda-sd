@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { dashboardRoutes, publicRoutes } from './helpers/route';
+import { getSessionCookie } from 'better-auth/cookies';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const sessionCookie = getSessionCookie(request);
 
   // Allow public routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
@@ -11,10 +13,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check for auth cookie instead of calling Better Auth API
-  const authCookie = request.cookies.get('better-auth.session_token');
-  console.log('authCookie', authCookie);
+  // const authCookie = request.cookies.get('better-auth.session_token');
+  // console.log('authCookie', authCookie);
 
-  if (!authCookie?.value) {
+  if (!sessionCookie) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -30,9 +32,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Default dashboard redirect
-  if (pathname === '/dashboard' || pathname === '/dashboard/') {
-    return NextResponse.redirect(new URL('/dashboard/customer', request.url));
-  }
+  // if (pathname === '/dashboard' || pathname === '/dashboard/') {
+  //   return NextResponse.redirect(new URL('/dashboard/customer', request.url));
+  // }
 
   return NextResponse.next();
 }

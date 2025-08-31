@@ -18,7 +18,7 @@ export async function findUserRoles(userId: string) {
   });
   const userData = {
     ...user,
-    roles: user?.user_roles.map((role) => role.name),
+    roles: user?.user_roles.map((role) => role.key),
     role_id: user?.user_roles[0]?.id,
   };
   return { success: true, data: userData };

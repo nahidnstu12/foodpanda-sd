@@ -1,14 +1,15 @@
-import { findUserRoles } from "@/actions/user";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
+import { findUserRoles } from '@/actions/user';
+import { AppSidebar } from '@/components/app-sidebar';
+import { Separator } from '@/components/ui/separator';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+} from '@/components/ui/sidebar';
+import { auth } from '@/lib/auth';
+import db from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export default async function Page({
   params,
@@ -19,19 +20,37 @@ export default async function Page({
     headers: await headers(),
   });
 
+  const user = await db.user.findUnique({
+    where: { id: session?.session?.userId },
+    select: {
+      user_roles: {
+        select: {
+          role_permissions: {
+            select: {
+              key: true,
+              name: true,
+              description: true,
+              group: true
+            }
+          }
+        }
+      }
+    }
+  });
+
   // const user = await findUserRoles(session?.session?.userId || "");
   const { role } = await params;
 
-  console.log("session", session, role);
+  console.log('session', session, role, user);
 
   // Redirect if not authenticated
   if (!session) {
-    redirect("/login");
+    redirect('/login');
   }
 
   return (
     <SidebarProvider>
-      {/* <AppSidebar />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -51,7 +70,7 @@ export default async function Page({
           </div>
           <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
         </div>
-      </SidebarInset> */}
+      </SidebarInset>
     </SidebarProvider>
   );
 }
