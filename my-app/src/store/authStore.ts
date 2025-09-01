@@ -1,17 +1,17 @@
-
-import PermissionService from '@/services/permissionService';
-import { create } from 'zustand';
+import { getUserPermissions } from "@/actions/permissions";
+import { UserPermissions } from "@/lib/permissionCache";
+import { create } from "zustand";
 
 interface AuthStore {
   user: any | null;
   permissions: UserPermissions | null;
   isLoading: boolean;
-  
+
   // Actions
   setUser: (user: any) => void;
   loadPermissions: (userId: string) => Promise<void>;
   clearAuth: () => void;
-  
+
   // Permission helpers
   can: (permission: string) => boolean;
   canAny: (permissions: string[]) => boolean;
@@ -19,8 +19,6 @@ interface AuthStore {
   hasRole: (roleName: string) => boolean;
   hasMinHierarchy: (minHierarchy: number) => boolean; // remove later
 }
-
-const permissionService = new PermissionService();
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
@@ -32,10 +30,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   loadPermissions: async (userId) => {
     set({ isLoading: true });
     try {
-      const permissions = await permissionService.getUserPermissions(userId);
+      const permissions = await getUserPermissions(userId);
       set({ permissions, isLoading: false });
     } catch (error) {
-      console.error('Failed to load permissions:', error);
+      console.error("Failed to load permissions:", error);
       set({ permissions: null, isLoading: false });
     }
   },
@@ -52,16 +50,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   canAny: (permissionList) => {
     const { permissions } = get();
     if (!permissions) return false;
-    
-    return permissionList.some(perm => permissions.permissions.has(perm));
+
+    return permissionList.some((perm) => permissions.permissions.has(perm));
   },
 
   // Check if user has ALL permissions
   canAll: (permissionList) => {
     const { permissions } = get();
     if (!permissions) return false;
-    
-    return permissionList.every(perm => permissions.permissions.has(perm));
+
+    return permissionList.every((perm) => permissions.permissions.has(perm));
   },
 
   // Check exact role
@@ -74,5 +72,5 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   hasMinHierarchy: (minHierarchy) => {
     const { permissions } = get();
     return (permissions?.roleHierarchy ?? 0) >= minHierarchy;
-  }
+  },
 }));

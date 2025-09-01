@@ -1,4 +1,4 @@
-interface UserPermissions {
+export interface UserPermissions {
     userId: string;
     roleId: string;
     roleName: string;
@@ -7,7 +7,7 @@ interface UserPermissions {
     allRolePermissions: Map<string, Set<string>>; // All roles with their permissions
     lastUpdated: Date;
   }
-class PermissionCache {
+export default class PermissionCache {
   private static instance: PermissionCache;
   private cache = new Map<string, UserPermissions>();
   private readonly TTL = 15 * 60 * 1000; // 15 minutes in milliseconds
