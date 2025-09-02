@@ -318,20 +318,38 @@ export async function loginAction(
   });
   const userRole = fetchUserRole?.user_roles[0].key; //TODO: Fix when mulitple role support
 
+  // if (userRole) {
+  //   switch (userRole) {
+  //     case UserRole.ADMIN:
+  //       redirect('/dashboard/admin');
+  //     case UserRole.PARTNER:
+  //       redirect('/dashboard/partner');
+  //     case UserRole.RIDER:
+  //       redirect('/dashboard/rider');
+  //     case UserRole.CUSTOMER:
+  //       redirect('/dashboard/customer');
+  //   }
+  // } else {
+  //   redirect('/dashboard/customer');
+  // }
+  let redirectPath = '/dashboard/customer';
   if (userRole) {
     switch (userRole) {
       case UserRole.ADMIN:
-        redirect('/dashboard/admin');
+        redirectPath = '/dashboard/admin';
+        break;
       case UserRole.PARTNER:
-        redirect('/dashboard/partner');
+        redirectPath = '/dashboard/partner';
+        break;
       case UserRole.RIDER:
-        redirect('/dashboard/rider');
-      case UserRole.CUSTOMER:
-        redirect('/dashboard/customer');
+        redirectPath = '/dashboard/rider';
+        break;
     }
-  } else {
-    redirect('/dashboard/customer');
   }
+
+  // Critical: revalidate the path to force the new session to be fetched
+  revalidatePath(redirectPath);
+  redirect(redirectPath);
 
   // Note: redirect() throws an exception, so code below it won't run.
   // The return type is still required by TypeScript.
