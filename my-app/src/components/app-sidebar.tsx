@@ -1,45 +1,40 @@
-'use client';
+"use client";
 
-import { GalleryVerticalEnd } from 'lucide-react';
+import { GalleryVerticalEnd } from "lucide-react";
 
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from '@/components/ui/sidebar';
-import { useAuthStore } from '@/store/authStore';
-import { useMenuStore } from '@/store/menuStore';
-import { useEffect } from 'react';
+} from "@/components/ui/sidebar";
+import { useAuthStore } from "@/store/authStore";
+import { useMenuStore } from "@/store/menuStore";
+import { useEffect } from "react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, permissions } = useAuthStore();
-  const { setUserPermissions, filteredMenu } = useMenuStore();
+  const { user, userPermissions } = useAuthStore();
+  const filteredMenu = useMenuStore((s) => s.filteredMenu);
+  const setUserPermissions = useMenuStore((s) => s.setUserPermissions);
 
-  console.log('app sidebar user>>', user);
-  console.log('app sidebar permissions>>', permissions);
-  console.log('app sidebar filteredMenu>>', filteredMenu);
+  // console.log('app sidebar user>>', user);
+  // console.log('app sidebar permissions>>', permissions);
+  // console.log('app sidebar filteredMenu>>', filteredMenu);
 
   useEffect(() => {
-    if (permissions?.permissions) {
-      // Extract key part from permission strings like "view_orders:View Orders"
-      const permissionKeys = Array.from(permissions.permissions).map(
-        (perm) => perm.split(':')[0]
-      );
-      const permissionSet = new Set(permissionKeys);
-      console.log('Setting menu permissions>>', permissionSet);
-      setUserPermissions(permissionSet);
+    if (userPermissions?.permissions) {
+      setUserPermissions(userPermissions.permissions); // pass the Set<string>
     }
-  }, [permissions?.permissions, setUserPermissions]);
+  }, [userPermissions?.permissions, setUserPermissions]);
 
   const data = {
     org: {
-      name: 'FoodPanda',
+      name: "Quick Serve",
       logo: GalleryVerticalEnd,
-      plan: permissions?.roleName || user?.roles?.[0] || 'User',
+      plan: userPermissions?.roleName || user?.roles?.[0] || "User",
     },
   };
   return (

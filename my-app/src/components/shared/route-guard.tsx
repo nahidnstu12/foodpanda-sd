@@ -1,58 +1,47 @@
-'use client';
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
-import { getRouteRequirements } from '@/helpers/route';
-import { useSession } from '@/lib/auth-client';
+// my-app/src/components/shared/route-guard.tsx
+"use client";
+import { getRouteRequirements } from "@/helpers/route";
+import { useSession } from "@/lib/auth-client";
+import { useAuthStore } from "@/store/authStore";
+import { forbidden, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { data: session } = useSession();
-  const {
-    user,
-    permissions,
-    isLoading,
-    loadPermissions,
-    canAll,
-    hasMinHierarchy,
-    setUser,
-  } = useAuthStore();
+  const { user, userPermissions, isLoading, loadPermissions, setUser, canAll } =
+    useAuthStore();
 
+  // hydrate user from session
   useEffect(() => {
-    if (session?.user && !user) {
-      setUser(session.user);
-    }
+    if (session?.user && !user) setUser(session.user);
   }, [session?.user, user, setUser]);
 
+  // load permissions once we have user
   useEffect(() => {
-    if (user?.id && !permissions) {
-      loadPermissions(user.id);
-    }
-  }, [user?.id, permissions, loadPermissions]);
+    if (user?.id && !userPermissions) loadPermissions(user.id);
+  }, [user?.id, userPermissions, loadPermissions]);
 
+  // strictly block rendering until permissions are present or no route requirements
   useEffect(() => {
-    if (isLoading || !user || !permissions) return;
+    if (!user || !userPermissions) return; // still initializing
 
     const routeReqs = getRouteRequirements(pathname);
     if (!routeReqs) return;
 
-    // Check permissions
-    if (routeReqs.permissions && !canAll(routeReqs.permissions)) {
-      router.push('/unauthorized');
-      return;
-    }
+    const required = routeReqs.permissions ?? [];
+    const ok = required.length === 0 ? true : canAll(required);
 
-    // Check hierarchy
-    if (routeReqs.minHierarchy && !hasMinHierarchy(routeReqs.minHierarchy)) {
-      router.push('/unauthorized');
-      return;
-    }
-  }, [pathname, user, permissions, isLoading, canAll, hasMinHierarchy, router]);
+    console.log("route guard ok>>", { ok, routeReqs });
 
-  // Loading state
-  if (isLoading || (user && !permissions)) {
-    return <div>Loading permissions...</div>;
+    if (!ok) forbidden();
+  }, [pathname, user, userPermissions, canAll]);
+
+  console.log("route guard check>>", { user, userPermissions, isLoading });
+
+  // unified loading gate to prevent any content flash
+  if (!user || isLoading || !userPermissions) {
+    return <div>Loading...</div>;
   }
 
   return <>{children}</>;

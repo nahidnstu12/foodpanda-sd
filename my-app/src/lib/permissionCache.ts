@@ -2,7 +2,7 @@ export interface UserPermissions {
     userId: string;
     roleId: string;
     roleName: string;
-    roleHierarchy: number;
+    // roleHierarchy: number;
     permissions: Set<string>; // Current role permissions only
     allRolePermissions: Map<string, Set<string>>; // All roles with their permissions
     lastUpdated: Date;

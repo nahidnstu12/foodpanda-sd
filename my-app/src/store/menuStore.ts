@@ -1,57 +1,46 @@
-import { create } from 'zustand';
-import { allMenus } from '@/config/menus';
+import { create } from "zustand";
+import { allMenus } from "@/config/menus";
 
 interface MenuState {
   userPermissions: Set<string>;
   filteredMenu: any[];
   setUserPermissions: (permissions: Set<string>) => void;
   getFilteredMenu: () => any[];
+  reset: () => void;
 }
 
 export const useMenuStore = create<MenuState>((set, get) => ({
   userPermissions: new Set(),
   filteredMenu: [],
 
-  setUserPermissions: (permissions: Set<string>) => {
-    console.log('MenuStore: Setting permissions:', permissions);
-    set({ userPermissions: permissions });
+  setUserPermissions: (permissions) => {
+    const permSet = Array.isArray(permissions)
+      ? new Set(permissions)
+      : permissions;
+    set({ userPermissions: permSet });
     get().getFilteredMenu();
   },
 
   getFilteredMenu: () => {
     const { userPermissions } = get();
 
-    const filterMenu = (items: any[]): any[] => {
-      return items
-        .filter((item) => {
-          // Check if user has ALL required permissions for this item
-          const hasPermission = item.permissions.every((perm: string) =>
-            userPermissions.has(perm)
-          );
-          console.log(
-            `MenuStore: Checking ${item.title} with permissions ${
-              item.permissions
-            }, user has: ${Array.from(
-              userPermissions
-            )}, result: ${hasPermission}`
-          );
-          return hasPermission;
-        })
+    const filterMenu = (items: any[]): any[] =>
+      items
+        .filter((item) =>
+          item.permissions?.every((p: string) => userPermissions.has(p))
+        )
         .map((item) => {
           if (item.items) {
-            const filteredChildren = filterMenu(item.items);
-            return filteredChildren.length > 0
-              ? { ...item, items: filteredChildren }
-              : null;
+            const children = filterMenu(item.items);
+            return children.length ? { ...item, items: children } : null;
           }
           return item;
         })
-        .filter(Boolean);
-    };
+        .filter(Boolean) as any[];
 
     const filtered = filterMenu(allMenus);
-    console.log('MenuStore: Filtered menu result:', filtered);
     set({ filteredMenu: filtered });
     return filtered;
   },
+  reset: () => set({ userPermissions: new Set(), filteredMenu: [] }),
 }));

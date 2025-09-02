@@ -44,23 +44,22 @@ export async function getUserPermissions(
   }
 
   // Convert to optimized format
-  const permissionsSet = new Set<string>();
   const rolePermissions = new Map<string, Set<string>>();
 
   user.user_roles.forEach((ur) => {
     const rolePermissionsSet = new Set<string>();
     ur.role_permissions.forEach((rp) => {
-      const permissionKey = `${rp.key}:${rp.name}`;
+      const permissionKey = `${rp.key}`;
       rolePermissionsSet.add(permissionKey);
     });
     rolePermissions.set(ur.name, rolePermissionsSet);
   });
 
+  // TODO: Multiple roles support
   permissions = {
     userId: user.id,
     roleId: user.user_roles[0].id,
     roleName: user.user_roles[0].name,
-    roleHierarchy: 100,
     permissions: rolePermissions.get(user.user_roles[0].name) || new Set(),
     allRolePermissions: rolePermissions,
     lastUpdated: new Date(),

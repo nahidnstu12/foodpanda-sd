@@ -1,8 +1,10 @@
-import { 
-    SquareTerminal, Bot, BookOpen, Settings2, 
-    Frame, PieChart, Map, Users, Shield, Database,
-    Truck, Store, ShoppingCart, UserCheck
-  } from 'lucide-react';
+import {
+  BookOpen,
+  PieChart,
+  Shield,
+  ShoppingCart,
+  Store
+} from 'lucide-react';
   
   export interface MenuItem {
     id: string;
@@ -98,7 +100,7 @@ import {
           id: 'all-menus', 
           title: 'All Menus', 
           url: '/menu', 
-          permissions: ['manage_menu'] 
+          permissions: ['view_orders'] 
         },
         { 
           id: 'create-menu', 
