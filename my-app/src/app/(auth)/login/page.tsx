@@ -17,6 +17,8 @@ const initialState = {
 
 export default function Page() {
   const [state, formAction] = useActionState(loginAction, initialState);
+ 
+  
 
   const { data: session } = useSession();
   // console.log('login page session>>', session, state);
@@ -34,6 +36,7 @@ export default function Page() {
         : '/dashboard/customer';
     redirect(redirectTo);
   }
+  console.log("login state>>", state, session);
   return (
     <div className="flex h-screen items-center justify-center">
       <div className="w-full max-w-md m-auto space-y-6 shadow p-8 bg-yellow-50 rounded-md">

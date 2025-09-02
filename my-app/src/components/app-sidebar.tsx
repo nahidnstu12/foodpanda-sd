@@ -1,187 +1,45 @@
-"use client";
+'use client';
 
-import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react";
+import { GalleryVerticalEnd } from 'lucide-react';
 
-import { NavMain } from "@/components/nav-main";
-import { NavUser } from "@/components/nav-user";
+import { NavMain } from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar";
-import { useAuthStore } from "@/store/authStore";
-import { useMenuStore } from "@/store/menuStore";
-import { useEffect } from "react";
-
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  org: {
-    name: "Quik Serve",
-    logo: GalleryVerticalEnd,
-    plan: "Admin",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-};
+} from '@/components/ui/sidebar';
+import { useAuthStore } from '@/store/authStore';
+import { useMenuStore } from '@/store/menuStore';
+import { useEffect } from 'react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuthStore();
-  const { setUserPermissions } = useMenuStore();
+  const { user, permissions } = useAuthStore();
+  const { setUserPermissions, filteredMenu } = useMenuStore();
 
-  console.log("app sidebar user>>", user);
+  console.log('app sidebar user>>', user);
+  console.log('app sidebar permissions>>', permissions);
+  console.log('app sidebar filteredMenu>>', filteredMenu);
 
   useEffect(() => {
-    if (user?.permissions) {
-      // Convert your permission format to Set
-      const permissionSet = new Set(
-        user.permissions.map((p: any) => p.value.split(":")[0]) // Extract key part
+    if (permissions?.permissions) {
+      // Extract key part from permission strings like "view_orders:View Orders"
+      const permissionKeys = Array.from(permissions.permissions).map(
+        (perm) => perm.split(':')[0]
       );
-      setUserPermissions(permissionSet as Set<string>);
+      const permissionSet = new Set(permissionKeys);
+      console.log('Setting menu permissions>>', permissionSet);
+      setUserPermissions(permissionSet);
     }
-  }, [user?.permissions, setUserPermissions]);
+  }, [permissions?.permissions, setUserPermissions]);
 
   const data = {
     org: {
-      name: "FoodPanda",
+      name: 'FoodPanda',
       logo: GalleryVerticalEnd,
-      plan: user?.roles[0] || "User",
+      plan: permissions?.roleName || user?.roles?.[0] || 'User',
     },
   };
   return (
@@ -198,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={useMenuStore.getState().filteredMenu} />
+        <NavMain items={filteredMenu} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

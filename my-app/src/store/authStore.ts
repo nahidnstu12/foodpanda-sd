@@ -1,6 +1,6 @@
-import { getUserPermissions } from "@/actions/permissions";
-import { UserPermissions } from "@/lib/permissionCache";
-import { create } from "zustand";
+import { getUserPermissions } from '@/actions/permissions';
+import { UserPermissions } from '@/lib/permissionCache';
+import { create } from 'zustand';
 
 interface AuthStore {
   user: any | null;
@@ -33,7 +33,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const permissions = await getUserPermissions(userId);
       set({ permissions, isLoading: false });
     } catch (error) {
-      console.error("Failed to load permissions:", error);
+      console.error('Failed to load permissions:', error);
       set({ permissions: null, isLoading: false });
     }
   },
