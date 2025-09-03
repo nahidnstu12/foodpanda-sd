@@ -30,11 +30,11 @@ import { redirect } from "next/navigation";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { user, userPermissions } = useAuthStore();
+  const { user, userPermissions, clearAuth } = useAuthStore();
 
   const handleSignOut = () => {
     signOut();
-    // reset();
+    clearAuth();
     redirect("/login");
   };
 

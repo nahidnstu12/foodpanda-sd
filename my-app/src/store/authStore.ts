@@ -1,7 +1,7 @@
 import { getUserPermissions } from "@/actions/permissions";
 import { UserPermissions } from "@/lib/permissionCache";
 import { create } from "zustand";
-import { useMenuStore } from "@/store/menuStore"; // add back
+import { useMenuStore } from "@/store/menuStore";
 
 interface AuthStore {
   user: any | null;
@@ -47,7 +47,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ user: null, userPermissions: null, isLoading: false });
     try {
       useMenuStore.getState().reset();
-    } catch {}
+      console.log("clearing auth");
+    } catch {
+      console.log("error clearing auth");
+    }
   },
 
   can: (permission) =>
