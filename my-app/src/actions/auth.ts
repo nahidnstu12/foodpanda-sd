@@ -270,9 +270,6 @@ export async function loginAction(
   const email = (formData.get('email') as string | null)?.trim();
   const password = formData.get('password') as string | null;
   let result: any;
-
-  console.log('loginAction>>', email, password);
-
   // --- Better Validation ---
   const validatedData = loginFormSchema.safeParse({ email, password });
   if (!validatedData.success) {
