@@ -287,7 +287,7 @@ export async function loginAction(
       },
     });
 
-    console.log("loginAction result>>", result);
+    // console.log("loginAction result>>", result);
 
     if (!result?.user) {
       // Handle cases where the API returns a 200 OK but no user (unlikely but safe)
@@ -330,7 +330,7 @@ export async function loginAction(
   }
 
   // Critical: revalidate the path to force the new session to be fetched
-  revalidatePath(redirectPath);
+  // revalidatePath(redirectPath);
   redirect(redirectPath);
 
   // Note: redirect() throws an exception, so code below it won't run.

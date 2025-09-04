@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { allMenus } from "@/config/menus";
+import { allMenus, getMenusByRole } from "@/config/menus";
+import { useAuthStore } from "./authStore";
 
 interface MenuState {
   userPermissions: Set<string>;
@@ -38,7 +39,9 @@ export const useMenuStore = create<MenuState>((set, get) => ({
         })
         .filter(Boolean) as any[];
 
-    const filtered = filterMenu(allMenus);
+    const role = useAuthStore.getState().user?.selected_role;
+    console.log("role>>", role);
+    const filtered = filterMenu(getMenusByRole(role));
     set({ filteredMenu: filtered });
     return filtered;
   },

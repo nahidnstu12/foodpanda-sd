@@ -1,4 +1,4 @@
-import { permissionsData, rolesData } from "../data/permissions.mjs";
+import { permissionsData, rolesData } from "../data/permission2.mjs";
 import { db } from "../prisma.mjs";
 
 export async function seedRolesAndPermissions() {

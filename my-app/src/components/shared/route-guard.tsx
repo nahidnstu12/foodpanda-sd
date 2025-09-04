@@ -1,8 +1,8 @@
 "use client";
-import { getRouteRequirements } from "@/helpers/route";
+import { getRouteRequirements, hasRouteAccess } from "@/helpers/route";
 import { getSession, useSession } from "@/lib/auth-client";
 import { useAuthStore } from "@/store/authStore";
-import { forbidden, usePathname } from "next/navigation";
+import { forbidden, redirect, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
@@ -20,7 +20,11 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
 
   async function fetchSession() {
     const session = await getSession();
-    setUser(session.data?.user);
+    if (session.data?.user) {
+      setUser(session.data?.user);
+    } else {
+      redirect("/login");
+    }
     console.log("getSession test>>", session);
   }
 
@@ -47,22 +51,27 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user || !userPermissions) return; // still initializing
 
-    const routeReqs = getRouteRequirements(pathname);
+    // const routeReqs = getRouteRequirements(pathname);
+    const routeReqs = hasRouteAccess(
+      pathname,
+      userPermissions.permissions,
+      user.selected_role
+    );
     if (!routeReqs) return;
 
-    const required = routeReqs.permissions ?? [];
-    const mode = routeReqs.mode ?? "ANY";
-    const ok =
-      required.length === 0
-        ? true
-        : mode === "ANY"
-        ? canAny(required)
-        : canAll(required);
+    // const required = routeReqs.permissions ?? [];
+    // const mode = routeReqs.mode ?? "ANY";
+    // const ok =
+    //   required.length === 0
+    //     ? true
+    //     : mode === "ANY"
+    //     ? canAny(required)
+    //     : canAll(required);
 
     // console.log("route guard ok>>", { ok, routeReqs });
 
-    if (!ok) forbidden();
-  }, [pathname, user, userPermissions, canAll]);
+    if (!routeReqs) forbidden();
+  }, [pathname, user, userPermissions]);
 
   console.log("route guard check>>", { user, userPermissions, isLoading });
 

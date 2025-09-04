@@ -1,15 +1,9 @@
-import { findUserRoles } from '@/actions/user';
-import { AppSidebar } from '@/components/app-sidebar';
-import { Separator } from '@/components/ui/separator';
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { auth } from '@/lib/auth';
-import db from '@/lib/prisma';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { auth } from "@/lib/auth";
+import db from "@/lib/prisma";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function Page({
   params,
@@ -20,32 +14,32 @@ export default async function Page({
     headers: await headers(),
   });
 
-  const user = await db.user.findUnique({
-    where: { id: session?.session?.userId },
-    select: {
-      user_roles: {
-        select: {
-          role_permissions: {
-            select: {
-              key: true,
-              name: true,
-              description: true,
-              group: true
-            }
-          }
-        }
-      }
-    }
-  });
+  // const user = await db.user.findUnique({
+  //   where: { id: session?.session?.userId },
+  //   select: {
+  //     user_roles: {
+  //       select: {
+  //         role_permissions: {
+  //           select: {
+  //             key: true,
+  //             name: true,
+  //             description: true,
+  //             group: true,
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
   // const user = await findUserRoles(session?.session?.userId || "");
   const { role } = await params;
 
-  console.log('session', session, role, user);
+  console.log("session dashboard page>>>>>>", session?.user?.name);
 
   // Redirect if not authenticated
   if (!session) {
-    redirect('/login');
+    redirect("/login");
   }
 
   return (

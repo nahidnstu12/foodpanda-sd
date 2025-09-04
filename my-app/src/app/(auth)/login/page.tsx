@@ -26,6 +26,7 @@ export default function Page() {
 
   if (session) {
     const role = (session.user as any)?.roles?.[0];
+    console.log("login page role>>", role);
     const redirectTo =
       role === UserType.SUPER_ADMIN
         ? "/dashboard/super-admin"
