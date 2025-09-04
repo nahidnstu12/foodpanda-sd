@@ -3,4 +3,5 @@ export enum UserRole {
   RIDER = 'RIDER',
   PARTNER = 'PARTNER',
   CUSTOMER = 'CUSTOMER',
+  SUPER_ADMIN = 'SUPER_ADMIN',
 }

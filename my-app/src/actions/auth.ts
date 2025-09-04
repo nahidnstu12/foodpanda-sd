@@ -1,14 +1,14 @@
-"use server";
+'use server';
 
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
 
-import db from "@/lib/prisma";
-import { loginFormSchema } from "@/schema/auth";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { sendWelcomeEmail } from "./send-email";
-import { UserRole } from "@/helpers/user.enum";
-import { headers } from "next/headers";
+import db from '@/lib/prisma';
+import { loginFormSchema } from '@/schema/auth';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { sendWelcomeEmail } from './send-email';
+import { UserRole } from '@/helpers/user.enum';
+import { headers } from 'next/headers';
 
 interface SignUpData {
   name: string;
@@ -36,10 +36,10 @@ export async function signUpAction(data: any): Promise<ActionResult> {
 
     // Validate required fields
     if (!name || !email || !password || !user_type) {
-      console.log("All fields are required");
+      console.log('All fields are required');
       return {
         success: false,
-        error: "All fields are required",
+        error: 'All fields are required',
       };
     }
 
@@ -53,7 +53,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (!validUserTypes.includes(user_type as UserRole)) {
       return {
         success: false,
-        error: "Invalid user type selected",
+        error: 'Invalid user type selected',
       };
     }
 
@@ -61,7 +61,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (password.length < 8) {
       return {
         success: false,
-        error: "Password must be at least 8 characters long",
+        error: 'Password must be at least 8 characters long',
       };
     }
 
@@ -73,7 +73,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (existingUser) {
       return {
         success: false,
-        error: "An account with this email already exists",
+        error: 'An account with this email already exists',
       };
     }
 
@@ -89,7 +89,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     if (!signUpResult || !signUpResult.user) {
       return {
         success: false,
-        error: "Failed to create user account",
+        error: 'Failed to create user account',
       };
     }
 
@@ -105,7 +105,7 @@ export async function signUpAction(data: any): Promise<ActionResult> {
     // sendWelcomeEmail(email, name);
 
     // Revalidate any cached data
-    revalidatePath("/");
+    revalidatePath('/');
 
     return {
       success: true,
@@ -119,16 +119,16 @@ export async function signUpAction(data: any): Promise<ActionResult> {
       },
     };
   } catch (error) {
-    console.error("Signup action error:", error);
+    console.error('Signup action error:', error);
     return {
       success: false,
-      error: "An unexpected error occurred. Please try again.",
+      error: 'An unexpected error occurred. Please try again.',
     };
   }
 }
 
 // Helper function to assign user role
-async function assignUserRole(userId: string, userType: string) {
+export async function assignUserRole(userId: string, userType: string) {
   try {
     // Map user_type to role key
     const roleKeyMap: Record<string, string> = {
@@ -136,6 +136,7 @@ async function assignUserRole(userId: string, userType: string) {
       RIDER: UserRole.RIDER,
       PARTNER: UserRole.PARTNER,
       ADMIN: UserRole.ADMIN,
+      SUPER_ADMIN: UserRole.SUPER_ADMIN,
     };
 
     const roleKey = roleKeyMap[userType as UserRole];
@@ -184,24 +185,24 @@ async function assignUserRole(userId: string, userType: string) {
 
     console.log(`Assigned role ${roleKey} to user ${userId}`);
   } catch (error) {
-    console.error("Error assigning user role:", error);
+    console.error('Error assigning user role:', error);
     throw error; // Re-throw to handle in main function
   }
 }
 
 // Helper function to create user profile
-async function createUserProfile(userId: string, userType: string) {
+export async function createUserProfile(userId: string, userType: string) {
   try {
     const profileData = {
       user_id: userId,
-      first_name: "",
-      last_name: "",
+      first_name: '',
+      last_name: '',
       dob: null,
       gender: null,
       photo_url: null,
     };
 
-    console.log("createUserProfile>>", userType);
+    console.log('createUserProfile>>', userType);
 
     switch (userType) {
       case UserRole.CUSTOMER:
@@ -227,7 +228,7 @@ async function createUserProfile(userId: string, userType: string) {
         await db.partnerProfile.create({
           data: {
             owner_user_id: userId,
-            company_name: "",
+            company_name: '',
             tax_id: null,
             restaurant_type: null,
             contact_number: null,
@@ -243,11 +244,18 @@ async function createUserProfile(userId: string, userType: string) {
         console.log(`Created admin profile for user ${userId}`);
         break;
 
+      case UserRole.SUPER_ADMIN:
+        await db.adminProfile.create({
+          data: profileData,
+        });
+        console.log(`Created super admin profile for user ${userId}`);
+        break;
+
       default:
         console.warn(`Unknown user_type for profile creation: ${userType}`);
     }
   } catch (error) {
-    console.error("Error creating user profile:", error);
+    console.error('Error creating user profile:', error);
     throw error; // Re-throw to handle in main function
   }
 }
@@ -257,7 +265,7 @@ export async function signUpWithRedirectAction(formData: FormData) {
   const result = await signUpAction(formData);
 
   if (result.success) {
-    redirect("/sign-in?message=Account created successfully");
+    redirect('/sign-in?message=Account created successfully');
   }
 
   return result;
@@ -267,8 +275,8 @@ export async function loginAction(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const email = (formData.get("email") as string | null)?.trim();
-  const password = formData.get("password") as string | null;
+  const email = (formData.get('email') as string | null)?.trim();
+  const password = formData.get('password') as string | null;
   let result: any;
   // --- Better Validation ---
   const validatedData = loginFormSchema.safeParse({ email, password });
@@ -291,19 +299,19 @@ export async function loginAction(
 
     if (!result?.user) {
       // Handle cases where the API returns a 200 OK but no user (unlikely but safe)
-      return { success: false, message: "Invalid email or password." };
+      return { success: false, message: 'Invalid email or password.' };
     }
   } catch (e: any) {
     // Handle actual API errors (e.g., 401 Unauthorized)
     // Important: Don't re-throw redirect errors!
-    if (e.message === "NEXT_REDIRECT") {
+    if (e.message === 'NEXT_REDIRECT') {
       throw e;
     }
     // You can inspect the error from your auth library to give more specific messages
-    console.error("Login Error:", e);
+    console.error('Login Error:', e);
     return {
       success: false,
-      message: e.message || "Invalid email or password.",
+      message: e.message || 'Invalid email or password.',
     };
   }
 
@@ -314,17 +322,17 @@ export async function loginAction(
     include: { user_roles: true },
   });
   const userRole = fetchUserRole?.user_roles[0].key; //TODO: Fix when mulitple role support
-  let redirectPath = "/dashboard/customer";
+  let redirectPath = '/dashboard/customer';
   if (userRole) {
     switch (userRole) {
       case UserRole.ADMIN:
-        redirectPath = "/dashboard/admin";
+        redirectPath = '/dashboard/admin';
         break;
       case UserRole.PARTNER:
-        redirectPath = "/dashboard/partner";
+        redirectPath = '/dashboard/partner';
         break;
       case UserRole.RIDER:
-        redirectPath = "/dashboard/rider";
+        redirectPath = '/dashboard/rider';
         break;
     }
   }
@@ -336,10 +344,10 @@ export async function loginAction(
   // Note: redirect() throws an exception, so code below it won't run.
   // The return type is still required by TypeScript.
   // We won't actually hit this return statement.
-  return { success: true, message: "Login successful!" };
+  return { success: true, message: 'Login successful!' };
 }
 
 export async function clearError() {
-  "use server";
-  redirect("/login");
+  'use server';
+  redirect('/login');
 }

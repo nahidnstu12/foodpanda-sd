@@ -55,7 +55,11 @@
     "@types/react-dom": "^19",
     "cross-env": "^10.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.5",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
