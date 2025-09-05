@@ -1,9 +1,10 @@
 "use client";
-import { getRouteRequirements, hasRouteAccess } from "@/helpers/route";
+import { hasRouteAccess } from "@/helpers/route";
 import { getSession, useSession } from "@/lib/auth-client";
 import { useAuthStore } from "@/store/authStore";
-import { forbidden, redirect, usePathname } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -27,10 +28,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
     }
     console.log("getSession test>>", session);
   }
-
-  // useEffect(() => {
-  //   if (!user && !session) fetchUser();
-  // }, [user, session]);
 
   // hydrate user from session
   useEffect(() => {
@@ -57,20 +54,22 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       userPermissions.permissions,
       user.selected_role
     );
-    if (!routeReqs) return;
+    console.log("routeReqs>>", {
+      routeReqs,
+      pathname,
+      perm: userPermissions.permissions,
+      userRole: user.selected_role,
+    });
 
-    // const required = routeReqs.permissions ?? [];
-    // const mode = routeReqs.mode ?? "ANY";
-    // const ok =
-    //   required.length === 0
-    //     ? true
-    //     : mode === "ANY"
-    //     ? canAny(required)
-    //     : canAll(required);
+    if (!routeReqs) {
+      const route = user?.selected_role
+        ? `/${user.selected_role.toLowerCase()}/dashboard`
+        : "/customer/dashboard";
+      toast.error("You do not have permission to access this page");
+      redirect(route);
 
-    // console.log("route guard ok>>", { ok, routeReqs });
-
-    if (!routeReqs) forbidden();
+      // forbidden();
+    }
   }, [pathname, user, userPermissions]);
 
   console.log("route guard check>>", { user, userPermissions, isLoading });

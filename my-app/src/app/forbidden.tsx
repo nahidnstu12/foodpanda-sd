@@ -1,5 +1,7 @@
-import { ShieldX, Home, ArrowLeft, Mail, HelpCircle } from "lucide-react";
-import Link from "next/link";
+"use client";
+import { GoBack } from "@/components/shared/go-back";
+import HomeButton from "@/components/shared/home-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,10 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { GoBack } from "@/components/shared/go-back";
+import { useAuthStore } from "@/store/authStore";
+import { HelpCircle, Home, Mail, ShieldX } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ForbiddenPage() {
+ 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
       <div className="max-w-lg w-full">
@@ -71,22 +76,20 @@ export default function ForbiddenPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button asChild variant="outline" className="flex-1">
+              {/* <Button
+                // asChild
+                variant="outline"
+                className="flex-1"
+              >
                 <Link
-                  href="/dashboard"
+                  href={route}
                   className="flex items-center justify-center gap-2"
                 >
                   <Home className="w-4 h-4" />
                   Dashboard
                 </Link>
-              </Button>
-
-              {/* <Button asChild className="flex-1">
-                <Link href="" className="flex items-center justify-center gap-2">
-                  <ArrowLeft className="w-4 h-4" />
-                  Go Back
-                </Link>
               </Button> */}
+              <HomeButton />
               <GoBack />
             </div>
 

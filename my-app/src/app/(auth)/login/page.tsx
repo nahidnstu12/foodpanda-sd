@@ -29,14 +29,14 @@ export default function Page() {
     console.log("login page role>>", role);
     const redirectTo =
       role === UserType.SUPER_ADMIN
-        ? "/dashboard/super-admin"
+        ? "/admin/dashboard"
         : role === UserType.ADMIN
-        ? "/dashboard/admin"
+        ? "/admin/dashboard"
         : role === UserType.PARTNER
-        ? "/dashboard/partner"
+        ? "/partner/dashboard"
         : role === UserType.RIDER
-        ? "/dashboard/rider"
-        : "/dashboard/customer";
+        ? "/rider/dashboard"
+        : "/customer/dashboard";
     redirect(redirectTo);
   }
   return (
