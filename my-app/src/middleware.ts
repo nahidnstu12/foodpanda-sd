@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { dashboardRoutes, publicRoutes } from './helpers/route';
 import { getSessionCookie } from 'better-auth/cookies';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { publicRoutes } from './helpers/route';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -21,15 +21,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check dashboard route permissions
-  const matchedRoute = Object.keys(dashboardRoutes).find((route) =>
-    pathname.startsWith(route)
-  );
+  // const matchedRoute = dashboardRoutes.includes(pathname);
 
-  if (matchedRoute) {
-    // This would need to be enhanced to check actual user roles from database
-    // For now, we'll handle this in the page components
-    return NextResponse.next();
-  }
+  // if (matchedRoute) {
+  //   // This would need to be enhanced to check actual user roles from database
+  //   // For now, we'll handle this in the page components
+  //   return NextResponse.next();
+  // }
 
   // Default dashboard redirect
   // if (pathname === '/dashboard' || pathname === '/dashboard/') {

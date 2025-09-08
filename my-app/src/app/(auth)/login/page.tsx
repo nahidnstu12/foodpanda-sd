@@ -1,20 +1,19 @@
-"use client";
+'use client';
 
-import { loginAction } from "@/actions/auth";
-import { FormPasswordInputServer } from "@/components/form/form-password-input-server";
-import FormSubmitButton from "@/components/form/form-submit-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useSession } from "@/lib/auth-client";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { useActionState } from "react";
-import { UserType } from "../../../../generated/prisma";
-import { useAuthStore } from "@/store/authStore";
+import { loginAction } from '@/actions/auth';
+import { FormPasswordInputServer } from '@/components/form/form-password-input-server';
+import FormSubmitButton from '@/components/form/form-submit-button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useSession } from '@/lib/auth-client';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { useActionState } from 'react';
+import { useAuthStore } from '@/store/authStore';
 
 const initialState = {
   success: false,
-  message: "",
+  message: '',
 };
 
 export default function Page() {
@@ -22,21 +21,23 @@ export default function Page() {
   const { user } = useAuthStore();
 
   const { data: session } = useSession();
-  console.log("login page user>>", user, session);
+  console.log('login page user>>', user, session);
 
   if (session) {
     const role = (session.user as any)?.roles?.[0];
-    console.log("login page role>>", role);
+    if (!role) {
+      redirect('/login');
+    }
     const redirectTo =
-      role === UserType.SUPER_ADMIN
-        ? "/admin/dashboard"
-        : role === UserType.ADMIN
-        ? "/admin/dashboard"
-        : role === UserType.PARTNER
-        ? "/partner/dashboard"
-        : role === UserType.RIDER
-        ? "/rider/dashboard"
-        : "/customer/dashboard";
+      role === 'SUPER_ADMIN'
+        ? '/admin/dashboard'
+        : role === 'ADMIN'
+        ? '/admin/dashboard'
+        : role === 'PARTNER'
+        ? '/partner/dashboard'
+        : role === 'RIDER'
+        ? '/rider/dashboard'
+        : '/customer/dashboard';
     redirect(redirectTo);
   }
   return (
@@ -79,7 +80,7 @@ export default function Page() {
         </form>
 
         <div className="text-center text-sm text-gray-600">
-          Don't have an account?{" "}
+          Don't have an account?{' '}
           <Link
             href="/signup"
             className="text-blue-600 hover:underline font-medium"

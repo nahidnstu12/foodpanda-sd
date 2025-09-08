@@ -15,8 +15,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
     isLoading,
     loadPermissions,
     setUser,
-    canAll,
-    canAny,
   } = useAuthStore();
 
   async function fetchSession() {

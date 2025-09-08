@@ -7,10 +7,10 @@ export const publicRoutes = [
   "/verify-email",
 ];
 export const dashboardRoutes = [
-  "/dashboard/admin",
-  "/dashboard/partner",
-  "/dashboard/rider",
-  "/dashboard/customer",
+  "/admin/dashboard",
+  "/partner/dashboard",
+  "/rider/dashboard",
+  "/customer/dashboard",
 ];
 
 type PermissionMode = "ALL" | "ANY";
