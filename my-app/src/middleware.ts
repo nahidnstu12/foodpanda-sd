@@ -1,7 +1,7 @@
-import { getSessionCookie } from 'better-auth/cookies';
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-import { publicRoutes } from './helpers/route';
+import { getSessionCookie } from "better-auth/cookies";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { publicRoutes } from "./config/route-list";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   // console.log('authCookie', authCookie);
 
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Check dashboard route permissions
@@ -38,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public).*)'],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|public).*)"],
 };

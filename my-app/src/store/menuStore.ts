@@ -1,5 +1,5 @@
+import { getMenusByRole } from "@/config/menus";
 import { create } from "zustand";
-import { allMenus, getMenusByRole } from "@/config/menus";
 import { useAuthStore } from "./authStore";
 
 interface MenuState {

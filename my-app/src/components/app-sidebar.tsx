@@ -20,10 +20,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const filteredMenu = useMenuStore((s) => s.filteredMenu);
   const setUserPermissions = useMenuStore((s) => s.setUserPermissions);
 
-  // console.log('app sidebar user>>', user);
-  // console.log('app sidebar permissions>>', permissions);
-  // console.log('app sidebar filteredMenu>>', filteredMenu);
-
   useEffect(() => {
     if (userPermissions?.permissions) {
       setUserPermissions(userPermissions.permissions); // pass the Set<string>
