@@ -30,3 +30,21 @@ export async function findUserRoles(userId: string) {
     return { success: false, message: "Error finding user roles" };
   }
 }
+
+export async function userListWithPagination(params: any) {
+  const { page, page_size, sort, order, filters } = params ?? {};
+  const { buildOrderBy, buildWhereFromFilters, paginatePrisma } = await import(
+    "@/lib/datatable"
+  );
+
+  const where = buildWhereFromFilters(filters);
+  const orderBy = buildOrderBy(sort, order);
+
+  const { items, pagination } = await paginatePrisma(
+    db.user,
+    { where, orderBy },
+    { page, page_size, sort, order, filters }
+  );
+
+  return { items, pagination };
+}
