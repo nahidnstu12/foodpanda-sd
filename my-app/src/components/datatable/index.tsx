@@ -46,6 +46,9 @@ interface DataTableProps<TData> {
   isLoading?: boolean;
   tableKey: string;
   openModal: () => void;
+  onFilterChange?: (filters: Record<string, any>) => void;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 const DEFAULT_STATE = {
@@ -66,6 +69,9 @@ export default function DataTable<TData>({
   isLoading = false,
   tableKey,
   openModal,
+  onFilterChange,
+  onPageChange,
+  onPageSizeChange,
 }: DataTableProps<TData>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -151,28 +157,40 @@ export default function DataTable<TData>({
 
   // Filter handler (for TopContent, if you want to support it)
   const handleFilterChange = (newFilters: Record<string, any>) => {
-    // Convert modal format to filter state using utility function
-    const filters = modalFormatToFilters(newFilters, NOTICES_FIELD_TYPE_MAP);
-    const updatedParams: Record<string, any> = { ...tableState, page: 1 };
-    if (Object.keys(filters).length > 0) {
-      updatedParams.filters = filters;
+    if (onFilterChange) {
+      onFilterChange(newFilters);
     } else {
-      delete (updatedParams as any).filters;
+      // Convert modal format to filter state using utility function
+      const filters = modalFormatToFilters(newFilters, NOTICES_FIELD_TYPE_MAP);
+      const updatedParams: Record<string, any> = { ...tableState, page: 1 };
+      if (Object.keys(filters).length > 0) {
+        updatedParams.filters = filters;
+      } else {
+        delete (updatedParams as any).filters;
+      }
+      setTableParams({ key: tableKey, params: updatedParams });
     }
-    setTableParams({ key: tableKey, params: updatedParams });
   };
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
-    setTableParams({ key: tableKey, params: { page } });
+    if (onPageChange) {
+      onPageChange(page);
+    } else {
+      setTableParams({ key: tableKey, params: { page } });
+    }
   };
   const handlePageSizeChange = (page_size: number) => {
-    setTableParams({ key: tableKey, params: { page_size, page: 1 } });
+    if (onPageSizeChange) {
+      onPageSizeChange(page_size);
+    } else {
+      setTableParams({ key: tableKey, params: { page_size, page: 1 } });
+    }
   };
 
   return (
     <div className="flex flex-col h-full min-h-[calc(100vh-100px)] max-h-[calc(100vh-100px)] overflow-hidden py-2 px-4">
-      <div className="sticky top-0 bg-background overflow-hidden">
+      <div className="sticky top-0 bg-background">
         <TopContent
           table={table}
           title={title}
@@ -191,7 +209,7 @@ export default function DataTable<TData>({
           tableKey={tableKey}
         />
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto">
         <div className="rounded-md border min-w-full">
           <Table>
             <TableHeader>
@@ -273,7 +291,7 @@ export default function DataTable<TData>({
         </div>
       </div>
       {paginationMeta && (
-        <div className="sticky bottom-0 bg-background max-w-[78vw] overflow-hidden">
+        <div className="sticky bottom-0 bg-background max-w-[78vw]">
           <BottomContent
             paginationMeta={paginationMeta}
             onPageChange={handlePageChange}

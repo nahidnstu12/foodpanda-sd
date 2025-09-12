@@ -1,6 +1,11 @@
 "use server";
 
 import db from "@/lib/prisma";
+import {
+  buildOrderBy,
+  buildWhereFromFilters,
+  paginatePrisma,
+} from "@/lib/datatable";
 
 export async function findUserRoles(userId: string) {
   if (!userId) return { success: false, message: "User not found" };
@@ -33,9 +38,6 @@ export async function findUserRoles(userId: string) {
 
 export async function userListWithPagination(params: any) {
   const { page, page_size, sort, order, filters } = params ?? {};
-  const { buildOrderBy, buildWhereFromFilters, paginatePrisma } = await import(
-    "@/lib/datatable"
-  );
 
   const where = buildWhereFromFilters(filters);
   const orderBy = buildOrderBy(sort, order);

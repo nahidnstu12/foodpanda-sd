@@ -37,7 +37,7 @@ export function buildOrderBy(
   order?: "asc" | "desc"
 ): any | undefined {
   if (!sort) return undefined;
-  const direction: Prisma.SortOrder = order === "desc" ? "desc" : "asc";
+  const direction: "asc" | "desc" = order === "desc" ? "desc" : "asc";
   // Support nested sort like "organization.name"
   if (sort.includes(".")) {
     const parts = sort.split(".");
