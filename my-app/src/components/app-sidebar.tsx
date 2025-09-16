@@ -2,7 +2,7 @@
 
 import { GalleryVerticalEnd } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
+import { NavMenu } from "@/components/nav-menu";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -47,7 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={filteredMenu} />
+        <NavMenu items={filteredMenu} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

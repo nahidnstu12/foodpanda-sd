@@ -28,7 +28,7 @@ type InitPayload = {
   initial: TableState;
 };
 
-type Store = {
+interface Store {
   tables: DatatableState;
   initTable: (payload: InitPayload) => void;
   setTableParams: (payload: SetParamsPayload) => void;

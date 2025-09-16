@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
-export function NavMain({
+export function NavMenu({
   items,
 }: {
   items: {
@@ -58,7 +58,7 @@ export function NavMain({
                     href={item.url}
                     className="w-full flex items-center gap-2"
                   >
-                    {item.icon && <item.icon />}
+                    {item.icon && <item.icon className="w-4 h-4" />}
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>

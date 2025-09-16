@@ -14,6 +14,8 @@ export interface DateRangeFilter {
   to?: string;
 }
 
+export type Filter = FilterValue | DateRangeFilter;
+
 type TableState = {
   page: number;
   page_size: number;
@@ -21,7 +23,7 @@ type TableState = {
   order?: "asc" | "desc";
   search?: string;
   status?: string;
-  filters?: Record<string, FilterValue | DateRangeFilter>;
+  filters?: Record<string, Filter>;
   // ...add more as needed
 };
 

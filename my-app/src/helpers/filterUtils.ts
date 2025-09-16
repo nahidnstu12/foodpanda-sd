@@ -1,5 +1,6 @@
 // import type { FilterValue, DateRangeFilter, FilterFieldType } from '@/store/features/datatableSlice';
 
+import { CustomColumnDef } from "@/components/datatable/type";
 import { DateRangeFilter, FilterFieldType, FilterValue } from "./datatable.type";
 
 // Utility functions for filter URL generation and parsing
@@ -276,3 +277,46 @@ export const STATIC_CONTENTS_FIELD_TYPE_MAP: Record<string, FilterFieldType> = {
   'status': 'select',
   'organization.name': 'select',
 };
+
+/**
+ * Auto-generate field type map from column definitions
+ */
+export function generateFieldTypeMap<T>(
+  columns: CustomColumnDef<T>[]
+): Record<string, FilterFieldType> {
+  return columns
+    .filter(col => col.enableColumnFilter && col.filterField && col.accessorKey)
+    .reduce((acc, col) => {
+      const fieldKey = String(col.accessorKey);
+      const filterType = col.filterField as FilterFieldType;
+      
+      // Handle special cases
+      if (filterType === 'daterange') {
+        acc[fieldKey] = 'daterange';
+      } else if (filterType === 'date') {
+        acc[fieldKey] = 'date';
+      } else if (filterType === 'select') {
+        acc[fieldKey] = 'select';
+      } else {
+        acc[fieldKey] = 'input';
+      }
+      
+      return acc;
+    }, {} as Record<string, FilterFieldType>);
+}
+
+/**
+ * Generate complete table config from columns
+ */
+export function generateTableConfig<T>(
+  tableKey: string,
+  columns: CustomColumnDef<T>[],
+  defaultPageSize: number = 10
+) {
+  return {
+    key: tableKey,
+    fieldTypes: generateFieldTypeMap(columns),
+    defaultPageSize,
+    columns
+  };
+}

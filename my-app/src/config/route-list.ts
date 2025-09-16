@@ -14,6 +14,8 @@ export const publicRoutes = [
   ROUTES.Auth.ForgotPassword,
   ROUTES.Auth.VerifyEmail,
 ];
+
+
 export const dashboardRoutes = [
   ROUTES.Admin.Dashboard,
   ROUTES.Partner.Dashboard,
@@ -27,25 +29,26 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     permissions: [PERMISSIONS.VIEW_DASHBOARD],
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
-  [ROUTES.Admin.Users]: { permissions: [PERMISSIONS.VIEW_USERS] },
+  [ROUTES.Admin.Users]: { permissions: [PERMISSIONS.VIEW_USER] },
+  [ROUTES.Admin.Permissions]: { permissions: [PERMISSIONS.VIEW_PERMISSION] },
   [ROUTES.Admin.Roles]: { permissions: [PERMISSIONS.MANAGE_ROLES] },
-  [ROUTES.Admin.Partners]: { permissions: [PERMISSIONS.VIEW_ALL_PARTNERS] },
+  [ROUTES.Admin.Partners]: { permissions: [PERMISSIONS.VIEW_PARTNER] },
   [ROUTES.Admin.PartnersOnboard]: {
-    permissions: [PERMISSIONS.CREATE_PARTNERS],
+    permissions: [PERMISSIONS.CREATE_PARTNER],
   },
-  [ROUTES.Admin.Restaurants]: { permissions: [PERMISSIONS.VIEW_ALL_PARTNERS] },
+  [ROUTES.Admin.Restaurants]: { permissions: [PERMISSIONS.VIEW_PARTNER] },
   [ROUTES.Admin.Menus]: { permissions: [PERMISSIONS.MANAGE_MENU] },
-  [ROUTES.Admin.Riders]: { permissions: [PERMISSIONS.VIEW_RIDERS] },
-  [ROUTES.Admin.RidersOnboard]: { permissions: [PERMISSIONS.CREATE_RIDERS] },
-  [ROUTES.Admin.Orders]: { permissions: [PERMISSIONS.VIEW_ALL_ORDERS] },
-  [ROUTES.Admin.OrdersTracking]: { permissions: [PERMISSIONS.VIEW_ALL_ORDERS] },
-  [ROUTES.Admin.Deliveries]: { permissions: [PERMISSIONS.VIEW_ALL_DELIVERIES] },
+  [ROUTES.Admin.Riders]: { permissions: [PERMISSIONS.VIEW_RIDER] },
+  [ROUTES.Admin.RidersOnboard]: { permissions: [PERMISSIONS.CREATE_RIDER] },
+  [ROUTES.Admin.Orders]: { permissions: [PERMISSIONS.VIEW_ORDER] },
+  [ROUTES.Admin.OrdersTracking]: { permissions: [PERMISSIONS.VIEW_ORDER] },
+  [ROUTES.Admin.Deliveries]: { permissions: [PERMISSIONS.VIEW_DELIVERIES] },
   [ROUTES.Admin.DeliveriesAssign]: {
     permissions: [PERMISSIONS.ASSIGN_DELIVERIES],
   },
-  [ROUTES.Admin.Payments]: { permissions: [PERMISSIONS.VIEW_ALL_PAYMENTS] },
+  [ROUTES.Admin.Payments]: { permissions: [PERMISSIONS.VIEW_PAYMENTS] },
   [ROUTES.Admin.PaymentsRefunds]: {
-    permissions: [PERMISSIONS.PROCESS_REFUNDS],
+    permissions: [PERMISSIONS.PROCESS_REFUND],
   },
   [ROUTES.Admin.Reviews]: { permissions: [PERMISSIONS.MODERATE_REVIEWS] },
   [ROUTES.Admin.Notifications]: {
@@ -62,11 +65,11 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
   [ROUTES.Partner.Menu]: { permissions: [PERMISSIONS.MANAGE_MENU] },
   [ROUTES.Partner.MenuCategories]: { permissions: [PERMISSIONS.MANAGE_MENU] },
   [ROUTES.Partner.MenuItems]: { permissions: [PERMISSIONS.MANAGE_MENU] },
-  [ROUTES.Partner.OrdersActive]: { permissions: [PERMISSIONS.VIEW_ORDERS] },
-  [ROUTES.Partner.OrdersHistory]: { permissions: [PERMISSIONS.VIEW_ORDERS] },
-  [ROUTES.Partner.Restaurant]: { permissions: [PERMISSIONS.UPDATE_PARTNERS] },
+  [ROUTES.Partner.OrdersActive]: { permissions: [PERMISSIONS.VIEW_ORDER] },
+  [ROUTES.Partner.OrdersHistory]: { permissions: [PERMISSIONS.VIEW_ORDER] },
+  [ROUTES.Partner.Restaurant]: { permissions: [PERMISSIONS.UPDATE_PARTNER] },
   [ROUTES.Partner.Earnings]: { permissions: [PERMISSIONS.VIEW_PAYMENTS] },
-  [ROUTES.Partner.Reviews]: { permissions: [PERMISSIONS.VIEW_REVIEWS] },
+  [ROUTES.Partner.Reviews]: { permissions: [PERMISSIONS.VIEW_REVIEW] },
   [ROUTES.Partner.Notifications]: {
     permissions: [PERMISSIONS.VIEW_NOTIFICATIONS],
   },
@@ -82,7 +85,7 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
   [ROUTES.Rider.DeliveriesHistory]: {
     permissions: [PERMISSIONS.VIEW_DELIVERIES],
   },
-  [ROUTES.Rider.Orders]: { permissions: [PERMISSIONS.VIEW_ORDERS] },
+  [ROUTES.Rider.Orders]: { permissions: [PERMISSIONS.VIEW_ORDER] },
   [ROUTES.Rider.Earnings]: { permissions: [PERMISSIONS.VIEW_PAYMENTS] },
   [ROUTES.Rider.Profile]: { permissions: [PERMISSIONS.VIEW_NOTIFICATIONS] },
   [ROUTES.Rider.Notifications]: {
@@ -94,11 +97,11 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     permissions: [PERMISSIONS.VIEW_DASHBOARD],
     roles: [UserRole.CUSTOMER],
   },
-  [ROUTES.Customer.Restaurants]: { permissions: [PERMISSIONS.CREATE_ORDERS] },
-  [ROUTES.Customer.OrdersActive]: { permissions: [PERMISSIONS.VIEW_ORDERS] },
-  [ROUTES.Customer.OrdersHistory]: { permissions: [PERMISSIONS.VIEW_ORDERS] },
+  [ROUTES.Customer.Restaurants]: { permissions: [PERMISSIONS.CREATE_ORDER] },
+  [ROUTES.Customer.OrdersActive]: { permissions: [PERMISSIONS.VIEW_ORDER] },
+  [ROUTES.Customer.OrdersHistory]: { permissions: [PERMISSIONS.VIEW_ORDER] },
   [ROUTES.Customer.Payments]: { permissions: [PERMISSIONS.VIEW_PAYMENTS] },
-  [ROUTES.Customer.Reviews]: { permissions: [PERMISSIONS.CREATE_REVIEWS] },
+  [ROUTES.Customer.Reviews]: { permissions: [PERMISSIONS.CREATE_REVIEW] },
   [ROUTES.Customer.Profile]: { permissions: [PERMISSIONS.VIEW_NOTIFICATIONS] },
   [ROUTES.Customer.Notifications]: {
     permissions: [PERMISSIONS.VIEW_NOTIFICATIONS],

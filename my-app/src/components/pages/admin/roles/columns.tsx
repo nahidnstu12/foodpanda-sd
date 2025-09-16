@@ -1,9 +1,9 @@
 import type { CustomColumnDef } from "@/components/datatable/type";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import ToolTip from "../../../shared/tool-tip";
-import { Permission } from "./all-permissions";
+import { Role } from "./list";
 
-export const permissionsColumns: CustomColumnDef<Permission>[] = [
+export const rolesColumns: CustomColumnDef<Role>[] = [
   {
     accessorKey: "name",
     header: "Name",
@@ -17,8 +17,8 @@ export const permissionsColumns: CustomColumnDef<Permission>[] = [
     filterField: "input",
   },
   {
-    accessorKey: "group",
-    header: "Group",
+    accessorKey: "description",
+    header: "Description",
     enableColumnFilter: true,
     filterField: "input",
   },

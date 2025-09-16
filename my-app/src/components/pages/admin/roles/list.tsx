@@ -1,23 +1,21 @@
 "use client";
 
-import { userListWithPagination } from "@/actions/user";
+import { roleListWithPagination } from "@/actions/roles";
 import { useTable } from "@/hooks/use-table";
 import DataTable from "../../../datatable";
-import { usersColumns } from "./columns";
+import { rolesColumns } from "./columns";
 
-export type User = {
+export type Role = {
   id: string;
   name: string;
-  email: string;
-  phone: string | null;
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
-  emailVerified: boolean;
-  is_phone_verified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  description: string | null;
+  key: string;
+  // status: "ACTIVE" | "INACTIVE";
+  // createdAt: Date;
+  // updatedAt: Date;
 };
 
-export default function UsersTable() {
+export default function RolesTable() {
   const {
     data,
     pagination,
@@ -27,8 +25,8 @@ export default function UsersTable() {
     handlePageChange,
     handlePageSizeChange,
   } = useTable({
-    tableKey: "users",
-    dataFetcher: userListWithPagination,
+    tableKey: "roles",
+    dataFetcher: roleListWithPagination,
   });
 
   if (error) {
@@ -42,12 +40,12 @@ export default function UsersTable() {
   return (
     <div className="container mx-auto py-6">
       <DataTable
-        columns={usersColumns}
+        columns={rolesColumns}
         data={data}
-        title="Users"
+        title="Roles"
         paginationMeta={pagination}
         isLoading={isLoading}
-        tableKey="users"
+        tableKey="roles"
         openModal={() => console.log("Open modal")}
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}

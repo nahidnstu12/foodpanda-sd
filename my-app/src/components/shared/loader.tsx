@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 
 type LoaderProps = {
@@ -16,7 +14,7 @@ export function Loader({ fullscreen = false, className }: LoaderProps) {
     );
   }
 
-  return <div className={"loader " + (className ?? "")} />;
+  return <div className={"loader w-full mx-auto" + (className ?? "")} />;
 }
 
 export default Loader;

@@ -29,7 +29,7 @@ import {
   modalFormatToFilters,
   NOTICES_FIELD_TYPE_MAP,
 } from "@/helpers/filterUtils";
-// no redirect in client-side effect; we'll use router.replace
+import Loader from "../shared/loader";
 
 export interface PaginationMeta {
   total_records: number;
@@ -257,7 +257,7 @@ export default function DataTable<TData>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    Loading...
+                    <Loader />
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows?.length ? (

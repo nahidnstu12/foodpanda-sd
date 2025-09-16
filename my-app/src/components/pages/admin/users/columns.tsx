@@ -1,18 +1,9 @@
-import { userListWithPagination } from "@/actions/user";
 import type { CustomColumnDef } from "@/components/datatable/type";
 import { Badge } from "@/components/ui/badge";
-import {
-  modalFormatToFilters,
-  parseBrowserUrlToFilters,
-  USERS_FIELD_TYPE_MAP,
-} from "@/helpers/filterUtils";
-import { selectTableState, useDatatableStore } from "@/store/datatableStore";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import DataTable from "../../../datatable";
 import ToolTip from "../../../shared/tool-tip";
 import { User } from "./all-users";
+
 const statusOptions = [
   { label: "Active", value: "ACTIVE" },
   { label: "Inactive", value: "INACTIVE" },
@@ -23,7 +14,8 @@ const verificationOptions = [
   { label: "Verified", value: "true" },
   { label: "Not Verified", value: "false" },
 ];
-export const columns: CustomColumnDef<User>[] = [
+
+export const usersColumns: CustomColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: "Name",
