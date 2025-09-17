@@ -28,18 +28,24 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum CommonStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
 model User {
-  id                String     @id @default(uuid())
-  username          String     @unique
+  id                String     @id @default(cuid()) // Better Auth prefers cuid
+  name              String
   email             String     @unique
   phone             String?    @unique
-  password          String
+  password          String? // Make optional for OAuth users
   status            UserStatus @default(INACTIVE)
-  // user_type         UserType   @default(CUSTOMER)
-  is_email_verified Boolean    @default(false)
+  emailVerified     Boolean    @default(false) @map("is_email_verified")
   is_phone_verified Boolean    @default(false)
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
   deleted_at        DateTime?
 
   customer_profile CustomerProfile?
@@ -48,17 +54,63 @@ model User {
   admin_profile    AdminProfile?
   user_roles       Role[]           @relation("user_role")
   address          Address[]
+  sessions         Session[]
+  accounts         Account[]
 
   @@index([status])
   @@map("users")
 }
 
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
+
+  @@map("verification")
+}
+
 model CustomerProfile {
-  id         String  @id @default(uuid())
-  user_id    String  @unique
+  id         String    @id @default(uuid())
+  user_id    String    @unique
   first_name String
   last_name  String
-  dob        DateTime
+  dob        DateTime?
   gender     String?
   photo_url  String?
 
@@ -66,12 +118,13 @@ model CustomerProfile {
 
   @@map("customer_profiles")
 }
+
 model AdminProfile {
-  id         String  @id @default(uuid())
-  user_id    String  @unique
+  id         String    @id @default(uuid())
+  user_id    String    @unique
   first_name String
   last_name  String
-  dob        DateTime
+  dob        DateTime?
   gender     String?
   photo_url  String?
 
@@ -81,11 +134,11 @@ model AdminProfile {
 }
 
 model RiderProfile {
-  id                          String  @id @default(uuid())
-  user_id                     String  @unique
+  id                          String    @id @default(uuid())
+  user_id                     String    @unique
   first_name                  String
   last_name                   String
-  dob                         DateTime
+  dob                         DateTime?
   gender                      String?
   photo_url                   String?
   license_number              String?
@@ -120,11 +173,14 @@ model PartnerProfile {
 }
 
 model Permission {
-  id          String  @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  key         String  @unique
+  key         String       @unique
   description String?
   group       String?
+  status      CommonStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   role_permissions Role[] @relation("role_permission")
 
@@ -132,10 +188,13 @@ model Permission {
 }
 
 model Role {
-  id          String  @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  key         String  @unique
+  key         String       @unique
   description String?
+  status      CommonStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   role_permissions Permission[] @relation("role_permission")
   user_roles       User[]       @relation("user_role")
@@ -144,7 +203,7 @@ model Role {
 }
 
 model Address {
-  id                 String  @id @default(uuid())
+  id                 String       @id @default(uuid())
   user_id            String?
   partner_profile_id String?
   address_line_1     String
@@ -155,7 +214,8 @@ model Address {
   postal_code        String
   latitude           Float
   longitude          Float
-  is_primary         Boolean @default(false)
+  is_primary         Boolean      @default(false)
+  status             CommonStatus @default(ACTIVE)
 
   user            User?           @relation(fields: [user_id], references: [id])
   partner_profile PartnerProfile? @relation(fields: [partner_profile_id], references: [id])

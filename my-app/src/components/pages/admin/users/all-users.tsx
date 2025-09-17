@@ -52,6 +52,7 @@ export default function UsersTable() {
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        syncUrl={false} // disable sync url, need to check 
       />
     </div>
   );

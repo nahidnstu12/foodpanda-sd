@@ -76,11 +76,16 @@ export function useTable<T>({
 
   // Local state
   const [data, setData] = useState<T[]>([]);
-  const [pagination, setPagination] = useState({
+  const [pagination, setPagination] = useState<{
+    total_records: number;
+    page_size: number;
+    current_page: number;
+    total_pages: number;
+  }>({
     total_records: 0,
-    page_size: 10,
-    current_page: 1,
-    total_pages: 1,
+    page_size: 0,
+    current_page: 0,
+    total_pages: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

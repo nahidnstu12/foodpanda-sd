@@ -28,6 +28,13 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum CommonStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
 model User {
   id                String     @id @default(cuid()) // Better Auth prefers cuid
   name              String
@@ -166,11 +173,14 @@ model PartnerProfile {
 }
 
 model Permission {
-  id          String  @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  key         String  @unique
+  key         String       @unique
   description String?
   group       String?
+  status      CommonStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   role_permissions Role[] @relation("role_permission")
 
@@ -178,10 +188,13 @@ model Permission {
 }
 
 model Role {
-  id          String  @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  key         String  @unique
+  key         String       @unique
   description String?
+  status      CommonStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   role_permissions Permission[] @relation("role_permission")
   user_roles       User[]       @relation("user_role")
@@ -190,7 +203,7 @@ model Role {
 }
 
 model Address {
-  id                 String  @id @default(uuid())
+  id                 String       @id @default(uuid())
   user_id            String?
   partner_profile_id String?
   address_line_1     String
@@ -201,7 +214,8 @@ model Address {
   postal_code        String
   latitude           Float
   longitude          Float
-  is_primary         Boolean @default(false)
+  is_primary         Boolean      @default(false)
+  status             CommonStatus @default(ACTIVE)
 
   user            User?           @relation(fields: [user_id], references: [id])
   partner_profile PartnerProfile? @relation(fields: [partner_profile_id], references: [id])

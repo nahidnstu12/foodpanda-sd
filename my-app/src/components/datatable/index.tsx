@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { initTable, setTableParams } from "@/store/features/datatableSlice";
 import {
   flexRender,
   getCoreRowModel,
@@ -27,9 +26,10 @@ import type { CustomColumnDef } from "./type";
 import {
   generateApiUrlParams,
   modalFormatToFilters,
-  NOTICES_FIELD_TYPE_MAP,
+  parseBrowserUrlToFilters,
 } from "@/helpers/filterUtils";
 import Loader from "../shared/loader";
+import { TABLE_REGISTRY } from "@/config/table-registry";
 
 export interface PaginationMeta {
   total_records: number;
@@ -49,17 +49,8 @@ interface DataTableProps<TData> {
   onFilterChange?: (filters: Record<string, any>) => void;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
+  syncUrl?: boolean;
 }
-
-const DEFAULT_STATE = {
-  page: 1,
-  page_size: 10,
-  sort: undefined,
-  order: undefined,
-  search: undefined,
-  status: undefined,
-  filters: undefined,
-};
 
 export default function DataTable<TData>({
   columns,
@@ -72,6 +63,7 @@ export default function DataTable<TData>({
   onFilterChange,
   onPageChange,
   onPageSizeChange,
+  syncUrl = true,
 }: DataTableProps<TData>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -83,15 +75,46 @@ export default function DataTable<TData>({
     }))
   );
   const tableState = useDatatableStore((s) => selectTableState(s, tableKey));
+  const config = TABLE_REGISTRY[tableKey as keyof typeof TABLE_REGISTRY];
 
-  // Initialize table state in store
+  // Initialize table state in store from URL if present
   useEffect(() => {
-    initTable({ key: tableKey, initial: DEFAULT_TABLE_STATE });
+    if (!syncUrl) return;
+    const params = new URLSearchParams(searchParams);
+
+    const limitParam = params.get("page[limit]");
+    const offsetParam = params.get("page[offset]");
+    const sortParam = params.get("sort");
+
+    const page_size = limitParam
+      ? parseInt(limitParam)
+      : config?.defaultPageSize ?? DEFAULT_TABLE_STATE.page_size;
+    const page = offsetParam
+      ? Math.max(1, Math.floor(parseInt(offsetParam) / page_size) + 1)
+      : DEFAULT_TABLE_STATE.page;
+    const sort = sortParam ? sortParam.replace("-", "") : undefined;
+    const order = sortParam?.startsWith("-")
+      ? ("desc" as const)
+      : ("asc" as const);
+
+    const filters = parseBrowserUrlToFilters(params, config.fieldTypes);
+
+    initTable({
+      key: tableKey,
+      initial: {
+        page,
+        page_size,
+        sort,
+        order: sort ? order : undefined,
+        filters: Object.keys(filters).length ? filters : undefined,
+      },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableKey]);
+  }, [tableKey, syncUrl]);
 
   // Sync Redux state to URL
   useEffect(() => {
+    if (!syncUrl) return;
     const params = new URLSearchParams();
 
     // sort & order
@@ -125,6 +148,7 @@ export default function DataTable<TData>({
     tableState.sort,
     tableState.order,
     tableState.filters,
+    syncUrl,
   ]);
 
   // Table instance
@@ -161,7 +185,7 @@ export default function DataTable<TData>({
       onFilterChange(newFilters);
     } else {
       // Convert modal format to filter state using utility function
-      const filters = modalFormatToFilters(newFilters, NOTICES_FIELD_TYPE_MAP);
+      const filters = modalFormatToFilters(newFilters, config.fieldTypes);
       const updatedParams: Record<string, any> = { ...tableState, page: 1 };
       if (Object.keys(filters).length > 0) {
         updatedParams.filters = filters;

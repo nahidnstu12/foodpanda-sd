@@ -139,7 +139,7 @@ export async function seedRolesAndPermissions() {
         },
       });
     }
-  });
+  }, { timeout: 10000 });
 
   console.log("✅ Permissions and roles synced successfully!");
 }
