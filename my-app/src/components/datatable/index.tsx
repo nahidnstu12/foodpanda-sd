@@ -50,6 +50,7 @@ interface DataTableProps<TData> {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   syncUrl?: boolean;
+  tableMeta?: any;
 }
 
 export default function DataTable<TData>({
@@ -64,6 +65,7 @@ export default function DataTable<TData>({
   onPageChange,
   onPageSizeChange,
   syncUrl = true,
+  tableMeta,
 }: DataTableProps<TData>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -162,6 +164,8 @@ export default function DataTable<TData>({
         ? [{ id: tableState.sort, desc: tableState.order === "desc" }]
         : [],
     },
+    // pass handlers for row actions via meta
+    meta: tableMeta,
   });
 
   // Sorting handler

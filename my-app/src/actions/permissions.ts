@@ -43,3 +43,83 @@ export async function permissionListWithPagination(params: any) {
 
   return { items, pagination };
 }
+
+export async function getPermissionById(id: string) {
+  if (!id) return { success: false, message: "Missing id" };
+  try {
+    const permission = await db.permission.findUnique({ where: { id } });
+    if (!permission) return { success: false, message: "Permission not found" };
+    return { success: true, data: permission };
+  } catch (error) {
+    console.error("getPermissionById error:", error);
+    return { success: false, message: "Failed to fetch permission" };
+  }
+}
+
+export async function createPermission(input: {
+  name: string;
+  key: string;
+  group?: string | null;
+  description?: string | null;
+}) {
+  try {
+    const created = await db.permission.create({
+      data: {
+        name: input.name,
+        key: input.key,
+        group: input.group ?? null,
+        description: input.description ?? null,
+      },
+    });
+    return { success: true, data: created };
+  } catch (error: any) {
+    console.error("createPermission error:", error);
+    const message =
+      error?.code === "P2002"
+        ? "Key must be unique"
+        : "Failed to create permission";
+    return { success: false, message };
+  }
+}
+
+export async function updatePermission(
+  id: string,
+  input: {
+    name: string;
+    key: string;
+    group?: string | null;
+    description?: string | null;
+  }
+) {
+  if (!id) return { success: false, message: "Missing id" };
+  try {
+    const updated = await db.permission.update({
+      where: { id },
+      data: {
+        name: input.name,
+        key: input.key,
+        group: input.group ?? null,
+        description: input.description ?? null,
+      },
+    });
+    return { success: true, data: updated };
+  } catch (error: any) {
+    console.error("updatePermission error:", error);
+    const message =
+      error?.code === "P2002"
+        ? "Key must be unique"
+        : "Failed to update permission";
+    return { success: false, message };
+  }
+}
+
+export async function deletePermission(id: string) {
+  if (!id) return { success: false, message: "Missing id" };
+  try {
+    await db.permission.delete({ where: { id } });
+    return { success: true };
+  } catch (error) {
+    console.error("deletePermission error:", error);
+    return { success: false, message: "Failed to delete permission" };
+  }
+}
