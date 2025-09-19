@@ -8,16 +8,9 @@ import AddEditPermissionModal from "./addedit";
 import ViewPermissionModal from "./view";
 import { deletePermission } from "@/actions/permissions";
 import { useState, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import type { PermissionRowActionHandlers } from "./columns";
+import DeleteConfirmationDialog from "@/components/shared/delete-confirmation-dialog";
+import { useDeleteConfirmation } from "@/hooks/use-delete-confirmation";
 
 export type Permission = {
   id: string;
@@ -35,7 +28,6 @@ export default function PermissionsTable() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openView, setOpenView] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const {
     data,
     pagination,
@@ -54,6 +46,24 @@ export default function PermissionsTable() {
     void refreshData();
   }, [refreshData]);
 
+  const {
+    deleteId,
+    isDeleting,
+    openDeleteDialog,
+    closeDeleteDialog,
+    handleDelete,
+  } = useDeleteConfirmation({
+    onDelete: deletePermission,
+    onSuccess: () => {
+      // If last item on page got deleted, go back a page; else just refresh
+      if (data.length <= 1 && pagination.current_page > 1) {
+        handlePageChange(pagination.current_page - 1);
+      } else {
+        void refreshData();
+      }
+    },
+  });
+
   const openCreate = () => {
     setEditingId(null);
     setOpenAddEdit(true);
@@ -67,21 +77,6 @@ export default function PermissionsTable() {
   const handleView = (id: string) => {
     setViewId(id);
     setOpenView(true);
-  };
-
-  const handleDelete = async () => {
-    if (!confirmDeleteId) return;
-    const res = await deletePermission(confirmDeleteId);
-    setConfirmDeleteId(null);
-    if (res?.success) {
-      // If last item on page got deleted, go back a page; else just refresh
-      if (data.length <= 1 && pagination.current_page > 1) {
-        handlePageChange(pagination.current_page - 1);
-      } else {
-        // explicit refresh avoids URL/filters mutation loops
-        void refreshData();
-      }
-    }
   };
 
   if (error) {
@@ -106,7 +101,7 @@ export default function PermissionsTable() {
           {
             onView: handleView,
             onEdit: handleEdit,
-            onDelete: (id: string) => setConfirmDeleteId(id),
+            onDelete: openDeleteDialog,
           } as PermissionRowActionHandlers
         }
         onFilterChange={handleFilterChange}
@@ -125,28 +120,14 @@ export default function PermissionsTable() {
         onOpenChange={setOpenView}
         id={viewId}
       />
-      <Dialog
-        open={!!confirmDeleteId}
-        onOpenChange={(o: boolean) => !o && setConfirmDeleteId(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete permission?</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will permanently delete the
-              permission.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={!!deleteId}
+        onOpenChange={closeDeleteDialog}
+        onConfirm={handleDelete}
+        title="Delete permission?"
+        description="This action cannot be undone. This will permanently delete the permission."
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

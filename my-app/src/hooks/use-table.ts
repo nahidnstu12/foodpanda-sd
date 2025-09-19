@@ -72,6 +72,56 @@ export function useTable<T>({
     setTableParams,
     resetTable: resetTableStore,
   } = useDatatableStore();
+
+  // URL management
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Parse URL params immediately to avoid double fetch
+  const getInitialStateFromUrl = () => {
+    if (!syncUrl) {
+      return {
+        page: 1,
+        page_size: config.defaultPageSize,
+        sort: undefined,
+        order: undefined as "asc" | "desc" | undefined,
+        filters: undefined,
+      };
+    }
+
+    const params = new URLSearchParams(searchParams);
+    const page = Math.max(
+      1,
+      parseInt(params.get("page[offset]") || "0") /
+        parseInt(params.get("page[limit]") || String(config.defaultPageSize)) +
+        1
+    );
+    const pageSize = parseInt(
+      params.get("page[limit]") || String(config.defaultPageSize)
+    );
+    const sort = params.get("sort")?.replace("-", "");
+    const order = params.get("sort")?.startsWith("-") ? "desc" : "asc";
+
+    // Parse filters from URL
+    const filters = parseBrowserUrlToFilters(params, config.fieldTypes);
+
+    return {
+      page,
+      page_size: pageSize,
+      sort: sort || undefined,
+      order: order as "asc" | "desc" | undefined,
+      filters: Object.keys(filters).length > 0 ? filters : undefined,
+    };
+  };
+
+  // Initialize table state immediately with URL params
+  const initialState = getInitialStateFromUrl();
+  initTable({
+    key: config.key,
+    initial: initialState,
+  });
+
   const tableState = useDatatableStore((s) => selectTableState(s, config.key));
 
   // Local state
@@ -89,46 +139,6 @@ export function useTable<T>({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // URL management
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // Initialize table state from URL params
-  useEffect(() => {
-    if (!syncUrl) return;
-
-    const params = new URLSearchParams(searchParams);
-
-    // Parse URL params
-    const page = Math.max(
-      1,
-      parseInt(params.get("page[offset]") || "0") /
-        parseInt(params.get("page[limit]") || String(config.defaultPageSize)) +
-        1
-    );
-    const pageSize = parseInt(
-      params.get("page[limit]") || String(config.defaultPageSize)
-    );
-    const sort = params.get("sort")?.replace("-", "");
-    const order = params.get("sort")?.startsWith("-") ? "desc" : "asc";
-
-    // Parse filters from URL
-    const filters = parseBrowserUrlToFilters(params, config.fieldTypes);
-
-    // Initialize table state
-    initTable({
-      key: config.key,
-      initial: {
-        page,
-        page_size: pageSize,
-        sort: sort || undefined,
-        order: order as "asc" | "desc" | undefined,
-        filters: Object.keys(filters).length > 0 ? filters : undefined,
-      },
-    });
-  }, [searchParams, initTable, config, syncUrl]);
 
   // Fetch data function
   const fetchData = useCallback(async () => {
@@ -172,16 +182,52 @@ export function useTable<T>({
     fetchData();
   }, [fetchData]);
 
+  // Update table state when URL changes (for browser back/forward)
+  useEffect(() => {
+    if (!syncUrl) return;
+
+    const params = new URLSearchParams(searchParams);
+    const page = Math.max(
+      1,
+      parseInt(params.get("page[offset]") || "0") /
+        parseInt(params.get("page[limit]") || String(config.defaultPageSize)) +
+        1
+    );
+    const pageSize = parseInt(
+      params.get("page[limit]") || String(config.defaultPageSize)
+    );
+    const sort = params.get("sort")?.replace("-", "");
+    const order = params.get("sort")?.startsWith("-") ? "desc" : "asc";
+    const filters = parseBrowserUrlToFilters(params, config.fieldTypes);
+
+    // Only update if state differs from URL
+    if (
+      tableState.page !== page ||
+      tableState.page_size !== pageSize ||
+      tableState.sort !== (sort || undefined) ||
+      tableState.order !== (order as "asc" | "desc" | undefined)
+    ) {
+      setTableParams({
+        key: config.key,
+        params: {
+          page,
+          page_size: pageSize,
+          sort: sort || undefined,
+          order: order as "asc" | "desc" | undefined,
+          filters: Object.keys(filters).length > 0 ? filters : undefined,
+        },
+      });
+    }
+  }, [searchParams, config, syncUrl, setTableParams]);
+
   // Update URL when table state changes
   const updateUrl = useCallback(() => {
     if (!syncUrl) return;
 
     const params = new URLSearchParams();
 
-    // Add pagination
-    if (tableState.page_size !== config.defaultPageSize) {
-      params.set("page[limit]", String(tableState.page_size));
-    }
+    // Always add pagination params (even defaults)
+    params.set("page[limit]", String(tableState.page_size));
     if (tableState.page > 1) {
       const offset = (tableState.page - 1) * tableState.page_size;
       params.set("page[offset]", String(offset));
@@ -214,12 +260,42 @@ export function useTable<T>({
 
     const newUrl = `${pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [tableState, config, syncUrl, pathname, router]);
+  }, [
+    tableState.page,
+    tableState.page_size,
+    tableState.sort,
+    tableState.order,
+    tableState.filters,
+    config,
+    syncUrl,
+    pathname,
+    router,
+  ]);
 
   // Sync URL when table state changes
   useEffect(() => {
     updateUrl();
   }, [updateUrl]);
+
+  // Force URL update when page size changes (immediate)
+  useEffect(() => {
+    if (!syncUrl) return;
+    updateUrl();
+  }, [tableState.page_size, syncUrl, updateUrl]);
+
+  // Ensure URL is updated on initial load if no params exist
+  useEffect(() => {
+    if (!syncUrl) return;
+
+    const params = new URLSearchParams(searchParams);
+    const hasPaginationParams =
+      params.has("page[limit]") || params.has("page[offset]");
+
+    // If no pagination params exist, update URL with defaults
+    if (!hasPaginationParams) {
+      updateUrl();
+    }
+  }, [searchParams, syncUrl, updateUrl]);
 
   // Event handlers
   const handleFilterChange = useCallback(

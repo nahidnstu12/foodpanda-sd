@@ -6,16 +6,16 @@ import {
   updatePermission,
 } from "@/actions/permissions";
 import { FormInput } from "@/components/form/form-input";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -57,7 +57,7 @@ export default function AddEditPermissionModal({
       () => ({ name: "", key: "", group: "", description: "" }),
       []
     ),
-    mode: "onChange",
+    mode: "onSubmit",
   });
 
   useEffect(() => {
@@ -160,6 +160,19 @@ export default function AddEditPermissionModal({
               disabled={loading}
               variant="textarea"
             />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {isEdit ? "Save Changes" : "Create"}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
