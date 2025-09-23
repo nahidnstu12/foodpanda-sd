@@ -56,6 +56,7 @@ model User {
   address          Address[]
   sessions         Session[]
   accounts         Account[]
+  user_permissions Permission[]     @relation("user_permission")
 
   @@index([status])
   @@map("users")
@@ -183,6 +184,7 @@ model Permission {
   updated_at  DateTime     @updatedAt
 
   role_permissions Role[] @relation("role_permission")
+  user_permissions User[] @relation("user_permission")
 
   @@map("permissions")
 }

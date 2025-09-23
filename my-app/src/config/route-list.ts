@@ -1,10 +1,10 @@
-import { UserRole } from "@/helpers/user.enum";
-import { ROUTES } from "./browser-route";
-import { PERMISSIONS } from "./permissions";
+import { UserRole } from '@/helpers/user.enum';
+import { ROUTES } from './browser-route';
+import { PERMISSIONS } from './permissions';
 
 export interface RouteConfig {
   permissions: string[];
-  mode?: "ANY" | "ALL"; // ANY: user needs at least one permission, ALL: user needs all permissions
+  mode?: 'ANY' | 'ALL'; // ANY: user needs at least one permission, ALL: user needs all permissions
   roles?: string[]; // Optional: restrict to specific roles
 }
 
@@ -14,7 +14,6 @@ export const publicRoutes = [
   ROUTES.Auth.ForgotPassword,
   ROUTES.Auth.VerifyEmail,
 ];
-
 
 export const dashboardRoutes = [
   ROUTES.Admin.Dashboard,
@@ -30,8 +29,10 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   [ROUTES.Admin.Users]: { permissions: [PERMISSIONS.VIEW_USER] },
+  [ROUTES.Admin.UserPermissions]: { permissions: [PERMISSIONS.VIEW_USER] },
   [ROUTES.Admin.Permissions]: { permissions: [PERMISSIONS.VIEW_PERMISSION] },
   [ROUTES.Admin.Roles]: { permissions: [PERMISSIONS.MANAGE_ROLES] },
+  [ROUTES.Admin.RolePermissions]: { permissions: [PERMISSIONS.MANAGE_ROLES] },
   [ROUTES.Admin.Partners]: { permissions: [PERMISSIONS.VIEW_PARTNER] },
   [ROUTES.Admin.PartnersOnboard]: {
     permissions: [PERMISSIONS.CREATE_PARTNER],

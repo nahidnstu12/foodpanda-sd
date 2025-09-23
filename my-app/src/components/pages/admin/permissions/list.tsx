@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { permissionListWithPagination } from "@/actions/permissions";
-import { useTable } from "@/hooks/use-table";
-import DataTable from "../../../datatable";
-import { permissionsColumns } from "./columns";
-import AddEditPermissionModal from "./addedit";
-import ViewPermissionModal from "./view";
-import { deletePermission } from "@/actions/permissions";
-import { useState, useCallback } from "react";
-import type { PermissionRowActionHandlers } from "./columns";
-import DeleteConfirmationDialog from "@/components/shared/delete-confirmation-dialog";
-import { useDeleteConfirmation } from "@/hooks/use-delete-confirmation";
+import { permissionListWithPagination } from '@/actions/permissions';
+import { useTable } from '@/hooks/use-table';
+import DataTable from '../../../datatable';
+import { permissionsColumns } from './columns';
+import AddEditPermissionModal from './addedit';
+import ViewPermissionModal from './view';
+import { deletePermission } from '@/actions/permissions';
+import { useState, useCallback } from 'react';
+import type { PermissionRowActionHandlers } from './columns';
+import DeleteConfirmationDialog from '@/components/shared/delete-confirmation-dialog';
+import { useDeleteConfirmation } from '@/hooks/use-delete-confirmation';
 
 export type Permission = {
   id: string;
@@ -38,7 +38,7 @@ export default function PermissionsTable() {
     handlePageSizeChange,
     refreshData,
   } = useTable({
-    tableKey: "permissions",
+    tableKey: 'permissions',
     dataFetcher: permissionListWithPagination,
   });
 

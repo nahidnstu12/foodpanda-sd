@@ -1,26 +1,24 @@
 'use client';
 
-import { deleteRole, roleListWithPagination } from '@/actions/roles';
+import { deleteUser, userListWithPagination } from '@/actions/user';
 import { useTable } from '@/hooks/use-table';
 import DataTable from '../../../datatable';
-import { rolesColumns } from './columns';
+import { usersColumns } from './columns';
 import { useCallback, useState } from 'react';
 import { useDeleteConfirmation } from '@/hooks/use-delete-confirmation';
 import AddEditModal from './addedit';
 import ViewModal from './view';
 import DeleteConfirmationDialog from '@/components/shared/delete-confirmation-dialog';
 
-export type Role = {
+export type AppUser = {
   id: string;
   name: string;
-  description: string | null;
-  key: string;
-  // status: "ACTIVE" | "INACTIVE";
-  // createdAt: Date;
-  // updatedAt: Date;
+  email: string;
+  phone: string | null;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 };
 
-export default function RolesTable() {
+export default function UsersTable() {
   const [openAddEdit, setOpenAddEdit] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openView, setOpenView] = useState(false);
@@ -35,8 +33,8 @@ export default function RolesTable() {
     handlePageSizeChange,
     refreshData,
   } = useTable({
-    tableKey: 'roles',
-    dataFetcher: roleListWithPagination,
+    tableKey: 'users',
+    dataFetcher: userListWithPagination,
   });
 
   const refresh = useCallback(() => {
@@ -50,9 +48,8 @@ export default function RolesTable() {
     closeDeleteDialog,
     handleDelete,
   } = useDeleteConfirmation({
-    onDelete: deleteRole,
+    onDelete: deleteUser,
     onSuccess: () => {
-      // If last item on page got deleted, go back a page; else just refresh
       if (data.length <= 1 && pagination.current_page > 1) {
         handlePageChange(pagination.current_page - 1);
       } else {
@@ -87,12 +84,12 @@ export default function RolesTable() {
   return (
     <div className="container mx-auto py-6">
       <DataTable
-        columns={rolesColumns}
+        columns={usersColumns}
         data={data}
-        title="Roles"
+        title="Users"
         paginationMeta={pagination}
         isLoading={isLoading}
-        tableKey="roles"
+        tableKey="users"
         openModal={openCreate}
         tableMeta={{
           onView: handleView,
@@ -114,8 +111,8 @@ export default function RolesTable() {
         open={!!deleteId}
         onOpenChange={closeDeleteDialog}
         onConfirm={handleDelete}
-        title="Delete role?"
-        description="This action cannot be undone. This will permanently delete the role."
+        title="Delete user?"
+        description="This action cannot be undone. This will permanently delete the user."
         isLoading={isDeleting}
       />
     </div>

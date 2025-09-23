@@ -1,6 +1,6 @@
-import { ROUTE_CONFIG } from "@/config/route-list";
+import { ROUTE_CONFIG } from '@/config/route-list';
 
-export type PermissionMode = "ANY" | "ALL";
+export type PermissionMode = 'ANY' | 'ALL';
 
 export function checkPermission(
   userPermissions: Set<string>,
@@ -12,10 +12,10 @@ export function checkPermission(
 export function checkPermissions(
   userPermissions: Set<string>,
   requiredPermissions: string[],
-  mode: PermissionMode = "ALL"
+  mode: PermissionMode = 'ALL'
 ): boolean {
   if (requiredPermissions.length === 0) return true;
-  if (mode === "ANY")
+  if (mode === 'ANY')
     return requiredPermissions.some((p) => userPermissions.has(p));
   return requiredPermissions.every((p) => userPermissions.has(p));
 }
@@ -25,7 +25,22 @@ export const hasRouteAccess = (
   userPermissions: Set<string>,
   userRole: string
 ): boolean => {
-  const routeConfig = ROUTE_CONFIG[route];
+  let routeConfig = ROUTE_CONFIG[route];
+  if (!routeConfig) {
+    // try dynamic pattern match: keys like /admin/roles/[id]/permissions
+    const matched = Object.entries(ROUTE_CONFIG).find(([pattern]) => {
+      if (!pattern.includes('[')) return false;
+      const regex = new RegExp(
+        '^' +
+          pattern
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // escape regex chars
+            .replace(/\\\[[^/]+\\\]/g, '[^/]+') +
+          '$'
+      );
+      return regex.test(route);
+    });
+    if (matched) routeConfig = matched[1];
+  }
   if (!routeConfig) return false;
 
   // Check role restriction first
@@ -34,9 +49,9 @@ export const hasRouteAccess = (
   }
 
   // Check permissions
-  const { permissions, mode = "ANY" } = routeConfig;
+  const { permissions, mode = 'ANY' } = routeConfig;
 
-  if (mode === "ALL") {
+  if (mode === 'ALL') {
     return permissions.every((permission) => userPermissions.has(permission));
   } else {
     return permissions.some((permission) => userPermissions.has(permission));
