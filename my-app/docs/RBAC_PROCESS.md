@@ -72,33 +72,14 @@ File: `src/config/menus.ts`
   1. Ensure the route exists in `browser-route.ts` and is configured in `route-list.ts`.
   2. Reference the route in the menu config and, if needed, a permission key from `permissions.ts`.
 
-### 6) Users CRUD (Admin)
-
-- Components: `src/components/pages/admin/users/*`
-- Page: `src/app/(admin)/[role]/users/page.tsx`
-- Actions: `src/actions/user.ts` → `getUserById`, `createUser`, `updateUser`, `deleteUser`, pagination via `userListWithPagination`.
-- Permission assignment for user: `/(admin)/[role]/users/[id]/permissions` (see Section 3).
-
-### 7) Roles CRUD (Admin)
-
-- Components: `src/components/pages/admin/roles/*`
-- Page: `src/app/(admin)/[role]/roles/page.tsx`
-- Actions: `src/actions/roles.ts` → `createRole`, `updateRole`, `deleteRole`, pagination via `roleListWithPagination`.
-- Permission assignment for role: `/(admin)/[role]/roles/[id]/permissions` (see Section 2).
-
-### 8) Permissions CRUD (Admin)
-
-- Components: `src/components/pages/admin/permissions/*`
-- Actions: `src/actions/permissions.ts` → `createPermission`, `updatePermission`, `deletePermission`, pagination via `permissionListWithPagination`.
-
-### 9) Caching and invalidation
+### 6) Caching and invalidation
 
 - `src/services/permissionService.ts` resolves effective permissions and caches per user.
 - Invalidation:
   - Role permission changes call `invalidateRolePermissions(roleId)` to drop affected users’ caches.
   - You can also clear all caches via `clearAllPermissionCaches` in `src/actions/permissions.ts`.
 
-### 10) Migrations & generate
+### 7) Migrations & generate
 
 - After schema changes: run Prisma migrate and generate.
   - Example (from `my-app`):

@@ -6,6 +6,9 @@ import {
   buildWhereFromFilters,
   paginatePrisma,
 } from '@/lib/datatable';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { UserRole } from '@/helpers/user.enum';
 import { UserStatus } from '../../generated/prisma';
 
 export async function findUserRoles(userId: string) {
@@ -43,9 +46,26 @@ export async function userListWithPagination(params: any) {
   const where = buildWhereFromFilters(filters);
   const orderBy = buildOrderBy(sort, order);
 
+  // Get current session to enforce role-based scoping
+  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUserId = session?.session?.userId;
+  const roles: string[] = (session?.user as any)?.roles ?? [];
+  const isAdmin =
+    roles?.includes(UserRole.ADMIN) || roles?.includes(UserRole.SUPER_ADMIN);
+
+  // For non-admins, restrict to only their own user record
+  let effectiveWhere: any = where ?? {};
+  if (!isAdmin && currentUserId) {
+    const hasBaseFilters =
+      effectiveWhere && Object.keys(effectiveWhere).length > 0;
+    effectiveWhere = hasBaseFilters
+      ? { AND: [effectiveWhere, { id: currentUserId }] }
+      : { id: currentUserId };
+  }
+
   const { items, pagination } = await paginatePrisma(
     db.user,
-    { where, orderBy },
+    { where: effectiveWhere, orderBy },
     { page, page_size, sort, order, filters }
   );
 
@@ -165,5 +185,35 @@ export async function setUserDirectPermissions(
   } catch (e) {
     console.error('setUserDirectPermissions error:', e);
     return { success: false, message: 'Failed to save permissions' };
+  }
+}
+
+export async function setUserRole(userId: string, roleId: string) {
+  if (!userId || !roleId)
+    return { success: false, message: 'Missing userId or roleId' };
+  try {
+    // replace existing roles with the selected one
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        user_roles: {
+          set: [],
+        },
+      },
+    } as any);
+
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        user_roles: {
+          connect: [{ id: roleId }],
+        },
+      },
+    } as any);
+
+    return { success: true };
+  } catch (e) {
+    console.error('setUserRole error:', e);
+    return { success: false, message: 'Failed to set user role' };
   }
 }

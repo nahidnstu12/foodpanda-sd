@@ -24,6 +24,20 @@ export async function roleListWithPagination(params: any) {
   return { items, pagination };
 }
 
+export async function listActiveRoles() {
+  try {
+    const roles = await db.role.findMany({
+      where: { status: 'ACTIVE' as any },
+      select: { id: true, name: true, key: true },
+      orderBy: { name: 'asc' },
+    });
+    return { success: true, data: roles };
+  } catch (error) {
+    console.error('listActiveRoles error:', error);
+    return { success: false, message: 'Failed to fetch roles' };
+  }
+}
+
 export async function getRoleById(id: string) {
   if (!id) return { success: false, message: 'Missing id' };
   try {

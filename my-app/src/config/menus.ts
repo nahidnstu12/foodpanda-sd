@@ -248,6 +248,37 @@ export const partnerMenus: MenuItem[] = [
     roles: ["PARTNER"],
   },
   {
+    id: "user_management",
+    title: "User Management",
+    icon: Users,
+    url: "",
+    permissions: [],
+    roles: [""],
+    items: [
+      {
+        id: "users",
+        title: "Users",
+        url: ROUTES.Admin.Users,
+        permissions: [PERMISSIONS.VIEW_USER],
+        roles: ["SUPER_ADMIN", "ADMIN", "PARTNER"],
+      },
+      {
+        id: "permissions",
+        title: "Permissions",
+        url: ROUTES.Admin.Permissions,
+        permissions: [PERMISSIONS.VIEW_PERMISSION],
+        roles: ["SUPER_ADMIN", "ADMIN"],
+      },
+      {
+        id: "roles",
+        title: "Roles",
+        url: ROUTES.Admin.Roles,
+        permissions: [PERMISSIONS.MANAGE_ROLES],
+        roles: ["SUPER_ADMIN", "ADMIN"],
+      },
+    ],
+  },
+  {
     id: "menu_management",
     title: "Menu Management",
     icon: Menu,

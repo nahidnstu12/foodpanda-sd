@@ -25,6 +25,7 @@ export const ROUTES = {
   },
   Partner: {
     Dashboard: '/partner/dashboard',
+    Users: '/partner/users',
     Menu: '/partner/menu',
     MenuCategories: '/partner/menu/categories',
     MenuItems: '/partner/menu/items',

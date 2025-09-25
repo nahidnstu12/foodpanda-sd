@@ -9,6 +9,8 @@ import { useDeleteConfirmation } from '@/hooks/use-delete-confirmation';
 import AddEditModal from './addedit';
 import ViewModal from './view';
 import DeleteConfirmationDialog from '@/components/shared/delete-confirmation-dialog';
+import RoleChangeModal from './role-change';
+import { useAuthStore } from '@/store/authStore';
 
 export type AppUser = {
   id: string;
@@ -23,6 +25,8 @@ export default function UsersTable() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openView, setOpenView] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
+  const [openRoleChange, setOpenRoleChange] = useState(false);
+  const [roleChangeUserId, setRoleChangeUserId] = useState<string | null>(null);
   const {
     data,
     pagination,
@@ -36,6 +40,9 @@ export default function UsersTable() {
     tableKey: 'users',
     dataFetcher: userListWithPagination,
   });
+
+  const can = useAuthStore((s) => s.can);
+  const canChangeRole = can('user_role_change');
 
   const refresh = useCallback(() => {
     void refreshData();
@@ -73,6 +80,11 @@ export default function UsersTable() {
     setOpenView(true);
   };
 
+  const handleChangeRole = (id: string) => {
+    setRoleChangeUserId(id);
+    setOpenRoleChange(true);
+  };
+
   if (error) {
     return (
       <div className="container mx-auto py-6">
@@ -95,6 +107,8 @@ export default function UsersTable() {
           onView: handleView,
           onEdit: handleEdit,
           onDelete: openDeleteDialog,
+          onChangeRole: handleChangeRole,
+          canChangeRole,
         }}
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}
@@ -114,6 +128,12 @@ export default function UsersTable() {
         title="Delete user?"
         description="This action cannot be undone. This will permanently delete the user."
         isLoading={isDeleting}
+      />
+      <RoleChangeModal
+        open={openRoleChange}
+        onOpenChange={setOpenRoleChange}
+        userId={roleChangeUserId}
+        onSuccess={refresh}
       />
     </div>
   );
