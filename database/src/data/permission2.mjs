@@ -96,6 +96,7 @@ export const permissionsData = [
   // System Settings
   { name: 'Manage Settings', key: 'manage_settings', description: 'Allows changing system configurations', group: 'system_settings' },
   { name: 'View Reports', key: 'view_reports', description: 'Allows viewing system reports and analytics', group: 'system_settings' },
+  {name: "User Role Change", key: "user_role_change", group:"user_management"}
 ];
 
 
@@ -119,6 +120,7 @@ export const rolesData = [
       'create_user',
       'update_user',
       'delete_user',
+      "user_role_change",
       'manage_roles',
       'list_permissions',
       'view_permission',

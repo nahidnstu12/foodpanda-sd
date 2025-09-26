@@ -56,6 +56,7 @@ model User {
   address          Address[]
   sessions         Session[]
   accounts         Account[]
+  user_permissions Permission[]     @relation("user_permission")
 
   @@index([status])
   @@map("users")
@@ -183,6 +184,7 @@ model Permission {
   updated_at  DateTime     @updatedAt
 
   role_permissions Role[] @relation("role_permission")
+  user_permissions User[] @relation("user_permission")
 
   @@map("permissions")
 }
@@ -222,4 +224,24 @@ model Address {
 
   @@index([city, state])
   @@map("addresses")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     String // ERROR, WARN, INFO, HTTP, VERBOSE, DEBUG, SILLY
+  message   String
+  timestamp DateTime @default(now())
+  service   String?
+  userId    String?  @map("user_id")
+  requestId String?  @map("request_id")
+  metadata  String? // JSON string
+  stack     String?
+  duration  Int? // milliseconds
+
+  @@index([level])
+  @@index([timestamp])
+  @@index([service])
+  @@index([userId])
+  @@index([requestId])
+  @@map("logs")
 }

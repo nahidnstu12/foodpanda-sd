@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
-import { deleteUser, userListWithPagination } from '@/actions/user';
-import { useTable } from '@/hooks/use-table';
-import DataTable from '../../../datatable';
-import { usersColumns } from './columns';
-import { useCallback, useState } from 'react';
-import { useDeleteConfirmation } from '@/hooks/use-delete-confirmation';
-import AddEditModal from './addedit';
-import ViewModal from './view';
-import DeleteConfirmationDialog from '@/components/shared/delete-confirmation-dialog';
-import RoleChangeModal from './role-change';
-import { useAuthStore } from '@/store/authStore';
+import { deleteUser, userListWithPagination } from "@/actions/user";
+import { useTable } from "@/hooks/use-table";
+import DataTable from "../../../datatable";
+import { usersColumns } from "./columns";
+import { useCallback, useState } from "react";
+import { useDeleteConfirmation } from "@/hooks/use-delete-confirmation";
+import AddEditModal from "./addedit";
+import ViewModal from "./view";
+import DeleteConfirmationDialog from "@/components/shared/delete-confirmation-dialog";
+import RoleChangeModal from "./role-change";
+import { useAuthStore } from "@/store/authStore";
+import { PERMISSIONS } from "@/config/permissions";
 
 export type AppUser = {
   id: string;
   name: string;
   email: string;
   phone: string | null;
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 };
 
 export default function UsersTable() {
@@ -37,12 +38,14 @@ export default function UsersTable() {
     handlePageSizeChange,
     refreshData,
   } = useTable({
-    tableKey: 'users',
+    tableKey: "users",
     dataFetcher: userListWithPagination,
   });
 
+  console.log("data>>", data);
+
   const can = useAuthStore((s) => s.can);
-  const canChangeRole = can('user_role_change');
+  const canChangeRole = can(PERMISSIONS.USER_ROLE_CHANGE);
 
   const refresh = useCallback(() => {
     void refreshData();

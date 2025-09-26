@@ -1,18 +1,21 @@
-'use server';
+"use server";
 
-import db from '@/lib/prisma';
+import db from "@/lib/prisma";
 import {
   buildOrderBy,
   buildWhereFromFilters,
   paginatePrisma,
-} from '@/lib/datatable';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { UserRole } from '@/helpers/user.enum';
-import { UserStatus } from '../../generated/prisma';
+} from "@/lib/datatable";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { UserRole } from "@/helpers/user.enum";
+import { UserStatus } from "../../generated/prisma";
+import { apiLogger } from "@/lib/logger";
+import { withActionGuard } from "@/lib/withActionGuard";
+import { PERMISSIONS } from "@/config/permissions";
 
 export async function findUserRoles(userId: string) {
-  if (!userId) return { success: false, message: 'User not found' };
+  if (!userId) return { success: false, message: "User not found" };
   try {
     const user = await db.user.findUnique({
       where: {
@@ -35,53 +38,66 @@ export async function findUserRoles(userId: string) {
     };
     return { success: true, data: userData };
   } catch (error) {
-    console.error('Error finding user roles:', error);
-    return { success: false, message: 'Error finding user roles' };
+    console.error("Error finding user roles:", error);
+    return { success: false, message: "Error finding user roles" };
   }
 }
 
 export async function userListWithPagination(params: any) {
   const { page, page_size, sort, order, filters } = params ?? {};
+  const result = await withActionGuard(
+    "user.list",
+    { anyOf: [PERMISSIONS.LIST_USERS, PERMISSIONS.VIEW_USER], audit: true },
+    async ({ userId }) => {
+      const where = buildWhereFromFilters(filters);
+      const orderBy = buildOrderBy(sort, order);
 
-  const where = buildWhereFromFilters(filters);
-  const orderBy = buildOrderBy(sort, order);
+      // scope: non-admins can only see users sharing their roles
+      const session = await auth.api.getSession({ headers: await headers() });
+      const roles: string[] = (session?.user as any)?.roles ?? [];
+      const isAdmin =
+        roles?.includes(UserRole.ADMIN) ||
+        roles?.includes(UserRole.SUPER_ADMIN);
 
-  // Get current session to enforce role-based scoping
-  const session = await auth.api.getSession({ headers: await headers() });
-  const currentUserId = session?.session?.userId;
-  const roles: string[] = (session?.user as any)?.roles ?? [];
-  const isAdmin =
-    roles?.includes(UserRole.ADMIN) || roles?.includes(UserRole.SUPER_ADMIN);
+      let effectiveWhere: any = where ?? {};
+      if (!isAdmin && roles?.length) {
+        const roleScopeFilter = {
+          user_roles: { some: { key: { in: roles } } },
+        } as const;
+        const hasBaseFilters =
+          effectiveWhere && Object.keys(effectiveWhere).length > 0;
+        effectiveWhere = hasBaseFilters
+          ? { AND: [effectiveWhere, roleScopeFilter] }
+          : roleScopeFilter;
+      }
 
-  // For non-admins, restrict to only their own user record
-  let effectiveWhere: any = where ?? {};
-  if (!isAdmin && currentUserId) {
-    const hasBaseFilters =
-      effectiveWhere && Object.keys(effectiveWhere).length > 0;
-    effectiveWhere = hasBaseFilters
-      ? { AND: [effectiveWhere, { id: currentUserId }] }
-      : { id: currentUserId };
-  }
-
-  const { items, pagination } = await paginatePrisma(
-    db.user,
-    { where: effectiveWhere, orderBy },
-    { page, page_size, sort, order, filters }
+      const { items, pagination } = await paginatePrisma(
+        db.user,
+        { where: effectiveWhere, orderBy },
+        { page, page_size, sort, order, filters }
+      );
+      return { items, pagination };
+    }
   );
-
-  return { items, pagination };
+  if (!result.success) {
+    throw new Error(result.message || "Unauthorized");
+  }
+  return result.data;
 }
 
 export async function getUserById(id: string) {
-  if (!id) return { success: false, message: 'Missing id' };
-  try {
-    const user = await db.user.findUnique({ where: { id } });
-    if (!user) return { success: false, message: 'User not found' };
-    return { success: true, data: user };
-  } catch (error) {
-    console.error('getUserById error:', error);
-    return { success: false, message: 'Failed to fetch user' };
-  }
+  if (!id) return { success: false, message: "Missing id" };
+  const result = await withActionGuard(
+    "user.get",
+    { required: PERMISSIONS.VIEW_USER, audit: true },
+    async () => {
+      const user = await db.user.findUnique({ where: { id } });
+      if (!user) throw new Error("NOT_FOUND");
+      return user;
+    }
+  );
+  if (!result.success) return result;
+  return { success: true, data: result.data };
 }
 
 export async function createUser(input: {
@@ -90,61 +106,69 @@ export async function createUser(input: {
   phone?: string | null;
   status: UserStatus;
 }) {
-  try {
-    const created = await db.user.create({
-      data: {
-        name: input.name,
-        email: input.email,
-        phone: input.phone ?? null,
-        status: input.status,
-      },
-    });
-    return { success: true, data: created };
-  } catch (error: any) {
-    console.error('createUser error:', error);
-    const message =
-      error?.code === 'P2002'
-        ? 'Email/Phone must be unique'
-        : 'Failed to create user';
-    return { success: false, message };
-  }
+  const result = await withActionGuard(
+    "user.create",
+    { required: PERMISSIONS.CREATE_USER, audit: true },
+    async () => {
+      const created = await db.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone ?? null,
+          status: input.status,
+        },
+      });
+      return created;
+    }
+  );
+  if (!result.success)
+    return {
+      success: false,
+      message: result.message,
+    } as any;
+  return { success: true, data: result.data };
 }
 
 export async function updateUser(
   id: string,
   input: { name: string; phone?: string | null; status: UserStatus }
 ) {
-  if (!id) return { success: false, message: 'Missing id' };
-  try {
-    const updated = await db.user.update({
-      where: { id },
-      data: {
-        name: input.name,
-        phone: input.phone ?? null,
-        status: input.status,
-      },
-    });
-    return { success: true, data: updated };
-  } catch (error: any) {
-    console.error('updateUser error:', error);
-    const message = 'Failed to update user';
-    return { success: false, message };
-  }
+  if (!id) return { success: false, message: "Missing id" };
+  const result = await withActionGuard(
+    "user.update",
+    { required: PERMISSIONS.UPDATE_USER, audit: true },
+    async () => {
+      const updated = await db.user.update({
+        where: { id },
+        data: {
+          name: input.name,
+          phone: input.phone ?? null,
+          status: input.status,
+        },
+      });
+      return updated;
+    }
+  );
+  if (!result.success) return result as any;
+  return { success: true, data: result.data };
 }
 
 export async function deleteUser(id: string) {
-  if (!id) return { success: false, message: 'Missing id' };
-  try {
-    await db.user.delete({ where: { id } });
-    return { success: true };
-  } catch (error) {
-    console.error('deleteUser error:', error);
-    return { success: false, message: 'Failed to delete user' };
-  }
+  if (!id) return { success: false, message: "Missing id" };
+  const result = await withActionGuard(
+    "user.delete",
+    { required: PERMISSIONS.DELETE_USER, audit: true },
+    async () => {
+      await db.user.delete({ where: { id } });
+      return true;
+    }
+  );
+  if (!result.success) return result as any;
+  return { success: true };
 }
 
 export async function getUserDirectPermissions(userId: string) {
-  if (!userId) return { success: false, message: 'Missing userId' };
+  if (!userId) return { success: false, message: "Missing userId" };
   try {
     const user = (await db.user.findUnique({
       where: { id: userId },
@@ -155,8 +179,8 @@ export async function getUserDirectPermissions(userId: string) {
       data: (user?.user_permissions ?? []).map((p: any) => p.id),
     };
   } catch (e) {
-    console.error('getUserDirectPermissions error:', e);
-    return { success: false, message: 'Failed to fetch permissions' };
+    console.error("getUserDirectPermissions error:", e);
+    return { success: false, message: "Failed to fetch permissions" };
   }
 }
 
@@ -164,7 +188,7 @@ export async function setUserDirectPermissions(
   userId: string,
   permissionIds: string[]
 ) {
-  if (!userId) return { success: false, message: 'Missing userId' };
+  if (!userId) return { success: false, message: "Missing userId" };
   try {
     // Reset then connect (replace strategy)
     await db.user.update({
@@ -183,14 +207,14 @@ export async function setUserDirectPermissions(
     }
     return { success: true };
   } catch (e) {
-    console.error('setUserDirectPermissions error:', e);
-    return { success: false, message: 'Failed to save permissions' };
+    console.error("setUserDirectPermissions error:", e);
+    return { success: false, message: "Failed to save permissions" };
   }
 }
 
 export async function setUserRole(userId: string, roleId: string) {
   if (!userId || !roleId)
-    return { success: false, message: 'Missing userId or roleId' };
+    return { success: false, message: "Missing userId or roleId" };
   try {
     // replace existing roles with the selected one
     await db.user.update({
@@ -213,7 +237,7 @@ export async function setUserRole(userId: string, roleId: string) {
 
     return { success: true };
   } catch (e) {
-    console.error('setUserRole error:', e);
-    return { success: false, message: 'Failed to set user role' };
+    console.error("setUserRole error:", e);
+    return { success: false, message: "Failed to set user role" };
   }
 }

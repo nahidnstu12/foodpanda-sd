@@ -18,6 +18,7 @@ export const PERMISSIONS = {
   CREATE_ROLE: "create_role",
   UPDATE_ROLE: "update_role",
   DELETE_ROLE: "delete_role",
+  USER_ROLE_CHANGE: "user_role_change",
 
   // --- Generated from createCrudPermissions('Permission') ---
   LIST_PERMISSIONS: "list_permissions",
