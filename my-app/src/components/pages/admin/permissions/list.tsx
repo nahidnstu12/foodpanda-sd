@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { permissionListWithPagination } from '@/actions/permissions';
-import { useTable } from '@/hooks/use-table';
-import DataTable from '../../../datatable';
-import { permissionsColumns } from './columns';
-import AddEditPermissionModal from './addedit';
-import ViewPermissionModal from './view';
-import { deletePermission } from '@/actions/permissions';
-import { useState, useCallback } from 'react';
-import type { PermissionRowActionHandlers } from './columns';
-import DeleteConfirmationDialog from '@/components/shared/delete-confirmation-dialog';
-import { useDeleteConfirmation } from '@/hooks/use-delete-confirmation';
+import { permissionListWithPagination } from "@/actions/permissions";
+import { useTable } from "@/hooks/use-table";
+import DataTable from "../../../datatable";
+import { permissionsColumns } from "./columns";
+import AddEditPermissionModal from "./addedit";
+import ViewPermissionModal from "./view";
+import { deletePermission } from "@/actions/permissions";
+import { useState, useCallback } from "react";
+import type { PermissionRowActionHandlers } from "./columns";
+import DeleteConfirmationDialog from "@/components/shared/delete-confirmation-dialog";
+import { useDeleteConfirmation } from "@/hooks/use-delete-confirmation";
+import { useAuthStore } from "@/store/authStore";
+import { PERMISSIONS } from "@/config/permissions";
 
 export type Permission = {
   id: string;
@@ -38,9 +40,15 @@ export default function PermissionsTable() {
     handlePageSizeChange,
     refreshData,
   } = useTable({
-    tableKey: 'permissions',
+    tableKey: "permissions",
     dataFetcher: permissionListWithPagination,
   });
+
+  const can = useAuthStore((s) => s.can);
+  const canChangeDelete = can(PERMISSIONS.DELETE_PERMISSION);
+  const canChangeUpdate = can(PERMISSIONS.UPDATE_PERMISSION);
+  const canChangeCreate = can(PERMISSIONS.CREATE_PERMISSION);
+  const canChangeView = can(PERMISSIONS.VIEW_PERMISSION);
 
   const refresh = useCallback(() => {
     void refreshData();
@@ -96,12 +104,16 @@ export default function PermissionsTable() {
         paginationMeta={pagination}
         isLoading={isLoading}
         tableKey="permissions"
-        openModal={openCreate}
+        {...(canChangeCreate ? { openModal: openCreate } : {})}
         tableMeta={
           {
             onView: handleView,
             onEdit: handleEdit,
             onDelete: openDeleteDialog,
+            canChangeDelete,
+            canChangeUpdate,
+            canChangeCreate,
+            canChangeView,
           } as PermissionRowActionHandlers
         }
         onFilterChange={handleFilterChange}

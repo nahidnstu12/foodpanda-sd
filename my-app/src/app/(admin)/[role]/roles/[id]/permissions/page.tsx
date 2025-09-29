@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { assignRolePermissions, getRolePermissions } from '@/actions/roles';
-import { listAllPermissions } from '@/actions/permissions';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { assignRolePermissions, getRolePermissions } from "@/actions/roles";
+import { listAllPermissions } from "@/actions/permissions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 
 type Permission = {
   id: string;
@@ -37,7 +37,7 @@ export default function RolePermissionsPage() {
       if (!mounted) return;
       if (allRes?.success) setAllPermissions(allRes.data as Permission[]);
       if (current?.success) {
-        setSelected(new Set(current.data.map((p: Permission) => p.id)));
+        setSelected(new Set(current.data?.map((p: Permission) => p.id) ?? []));
       }
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function RolePermissionsPage() {
   const grouped = useMemo(() => {
     const map = new Map<string, Permission[]>();
     for (const p of allPermissions) {
-      const g = p.group || 'Ungrouped';
+      const g = p.group || "Ungrouped";
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(p);
     }
@@ -119,7 +119,7 @@ export default function RolePermissionsPage() {
                     onCheckedChange={(v) => toggleGroup(ids, Boolean(v))}
                   />
                   <span className="text-sm text-muted-foreground">
-                    {someChecked ? 'Select all (partial)' : 'Select all'}
+                    {someChecked ? "Select all (partial)" : "Select all"}
                   </span>
                 </div>
               </CardHeader>

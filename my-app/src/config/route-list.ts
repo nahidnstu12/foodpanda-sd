@@ -1,10 +1,10 @@
-import { UserRole } from '@/helpers/user.enum';
-import { ROUTES } from './browser-route';
-import { PERMISSIONS } from './permissions';
+import { UserRole } from "@/helpers/user.enum";
+import { ROUTES } from "./browser-route";
+import { PERMISSIONS } from "./permissions";
 
 export interface RouteConfig {
   permissions: string[];
-  mode?: 'ANY' | 'ALL'; // ANY: user needs at least one permission, ALL: user needs all permissions
+  mode?: "ANY" | "ALL"; // ANY: user needs at least one permission, ALL: user needs all permissions
   roles?: string[]; // Optional: restrict to specific roles
 }
 
@@ -28,11 +28,15 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     permissions: [PERMISSIONS.VIEW_DASHBOARD],
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
-  [ROUTES.Admin.Users]: { permissions: [PERMISSIONS.VIEW_USER] },
-  [ROUTES.Admin.UserPermissions]: { permissions: [PERMISSIONS.VIEW_USER] },
-  [ROUTES.Admin.Permissions]: { permissions: [PERMISSIONS.VIEW_PERMISSION] },
-  [ROUTES.Admin.Roles]: { permissions: [PERMISSIONS.MANAGE_ROLES] },
-  [ROUTES.Admin.RolePermissions]: { permissions: [PERMISSIONS.MANAGE_ROLES] },
+  [ROUTES.Admin.Users]: { permissions: [PERMISSIONS.LIST_USERS] },
+  [ROUTES.Admin.UserPermissions]: {
+    permissions: [PERMISSIONS.USER_PERMISSION_CHANGE],
+  },
+  [ROUTES.Admin.Permissions]: { permissions: [PERMISSIONS.LIST_PERMISSIONS] },
+  [ROUTES.Admin.Roles]: { permissions: [PERMISSIONS.LIST_ROLES] },
+  [ROUTES.Admin.RolePermissions]: {
+    permissions: [PERMISSIONS.ROLE_PERMISSION_CHANGE],
+  },
   [ROUTES.Admin.Partners]: { permissions: [PERMISSIONS.VIEW_PARTNER] },
   [ROUTES.Admin.PartnersOnboard]: {
     permissions: [PERMISSIONS.CREATE_PARTNER],

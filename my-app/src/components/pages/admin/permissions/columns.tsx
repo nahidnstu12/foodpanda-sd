@@ -34,28 +34,33 @@ export const permissionsColumns: CustomColumnDef<Permission>[] = [
     id: "actions",
     header: "Actions",
     cell: ({ row, table }: { row: any; table: Table<Permission> }) => {
-      const handlers = (table?.options?.meta ??
-        ({} as any)) as PermissionRowActionHandlers;
+      const meta: any = table.options.meta;
       return (
         <div className="flex items-center gap-3">
-          <ToolTip content="View Details">
-            <Eye
-              className="h-4 w-4 text-blue-600 cursor-pointer"
-              onClick={() => handlers.onView?.(row.original.id)}
-            />
-          </ToolTip>
-          <ToolTip content="Edit">
-            <Pencil
-              className="h-4 w-4 text-teal-600 cursor-pointer"
-              onClick={() => handlers.onEdit?.(row.original.id)}
-            />
-          </ToolTip>
-          <ToolTip content="Delete">
-            <Trash2
-              className="h-4 w-4 text-red-600 cursor-pointer"
-              onClick={() => handlers.onDelete?.(row.original.id)}
-            />
-          </ToolTip>
+          {meta?.canChangeView && (
+            <ToolTip content="View Details">
+              <Eye
+                className="h-4 w-4 text-blue-600 cursor-pointer"
+                onClick={() => meta.onView?.(row.original.id)}
+              />
+            </ToolTip>
+          )}
+          {meta?.canChangeUpdate && (
+            <ToolTip content="Edit">
+              <Pencil
+                className="h-4 w-4 text-teal-600 cursor-pointer"
+                onClick={() => meta.onEdit?.(row.original.id)}
+              />
+            </ToolTip>
+          )}
+          {meta?.canChangeDelete && (
+            <ToolTip content="Delete">
+              <Trash2
+                className="h-4 w-4 text-red-600 cursor-pointer"
+                onClick={() => meta.onDelete?.(row.original.id)}
+              />
+            </ToolTip>
+          )}
         </div>
       );
     },

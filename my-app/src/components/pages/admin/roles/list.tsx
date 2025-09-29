@@ -9,6 +9,8 @@ import { useDeleteConfirmation } from '@/hooks/use-delete-confirmation';
 import AddEditModal from './addedit';
 import ViewModal from './view';
 import DeleteConfirmationDialog from '@/components/shared/delete-confirmation-dialog';
+import { useAuthStore } from '@/store/authStore';
+import { PERMISSIONS } from '@/config/permissions';
 
 export type Role = {
   id: string;
@@ -38,6 +40,13 @@ export default function RolesTable() {
     tableKey: 'roles',
     dataFetcher: roleListWithPagination,
   });
+
+  const can = useAuthStore((s) => s.can);
+  const canChangePermission = can(PERMISSIONS.ROLE_PERMISSION_CHANGE);
+  const canChangeDelete = can(PERMISSIONS.DELETE_ROLE);
+  const canChangeUpdate = can(PERMISSIONS.UPDATE_ROLE);
+  const canChangeCreate = can(PERMISSIONS.CREATE_ROLE);
+  const canChangeView = can(PERMISSIONS.VIEW_ROLE);
 
   const refresh = useCallback(() => {
     void refreshData();
@@ -93,11 +102,16 @@ export default function RolesTable() {
         paginationMeta={pagination}
         isLoading={isLoading}
         tableKey="roles"
-        openModal={openCreate}
+        openModal={canChangeCreate ? openCreate : false }
         tableMeta={{
           onView: handleView,
           onEdit: handleEdit,
           onDelete: openDeleteDialog,
+          canChangePermission,
+          canChangeDelete,
+          canChangeUpdate,
+          canChangeCreate,
+          canChangeView,
         }}
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}

@@ -13,6 +13,7 @@ import { UserStatus } from "../../generated/prisma";
 import { apiLogger } from "@/lib/logger";
 import { withActionGuard } from "@/lib/withActionGuard";
 import { PERMISSIONS } from "@/config/permissions";
+import { invalidateUserPermissions } from "@/actions/permissions";
 
 export async function findUserRoles(userId: string) {
   if (!userId) return { success: false, message: "User not found" };
@@ -205,6 +206,8 @@ export async function setUserDirectPermissions(
         },
       } as any);
     }
+    // Bust permission cache for this user so UI sees changes immediately
+    await invalidateUserPermissions(userId);
     return { success: true };
   } catch (e) {
     console.error("setUserDirectPermissions error:", e);
@@ -234,7 +237,8 @@ export async function setUserRole(userId: string, roleId: string) {
         },
       },
     } as any);
-
+    // Bust permission cache for this user so role change takes effect
+    await invalidateUserPermissions(userId);
     return { success: true };
   } catch (e) {
     console.error("setUserRole error:", e);

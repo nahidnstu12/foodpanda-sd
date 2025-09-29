@@ -42,10 +42,13 @@ export default function UsersTable() {
     dataFetcher: userListWithPagination,
   });
 
-  console.log("data>>", data);
-
   const can = useAuthStore((s) => s.can);
   const canChangeRole = can(PERMISSIONS.USER_ROLE_CHANGE);
+  const canChangePermission = can(PERMISSIONS.USER_PERMISSION_CHANGE);
+  const canChangeDelete = can(PERMISSIONS.DELETE_USER);
+  const canChangeUpdate = can(PERMISSIONS.UPDATE_USER);
+  const canChangeCreate = can(PERMISSIONS.CREATE_USER);
+  const canChangeView = can(PERMISSIONS.VIEW_USER);
 
   const refresh = useCallback(() => {
     void refreshData();
@@ -105,13 +108,18 @@ export default function UsersTable() {
         paginationMeta={pagination}
         isLoading={isLoading}
         tableKey="users"
-        openModal={openCreate}
+        openModal={canChangeCreate ? openCreate : false}
         tableMeta={{
           onView: handleView,
           onEdit: handleEdit,
           onDelete: openDeleteDialog,
           onChangeRole: handleChangeRole,
           canChangeRole,
+          canChangePermission,
+          canChangeDelete,
+          canChangeUpdate,
+          canChangeCreate,
+          canChangeView,
         }}
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}

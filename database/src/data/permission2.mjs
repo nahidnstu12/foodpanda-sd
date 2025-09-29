@@ -66,6 +66,8 @@ export const permissionsData = [
 
   // User Management (Special cases)
   { name: 'Manage Roles', key: 'manage_roles', description: 'Allows assigning and managing roles', group: 'role_management' },
+  { name: 'Role Permission Change', key: 'role_permission_change', description: 'Allows changing role permissions', group: 'role_management' },
+  { name: 'User Permission Change', key: 'user_permission_change', description: 'Allows changing user permissions', group: 'user_management' },
 
   // Partner Management (Special cases)
   { name: 'Manage Menu', key: 'manage_menu', description: 'Allows partners to manage their menu items', group: 'partner_management' },

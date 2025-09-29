@@ -45,7 +45,7 @@ interface DataTableProps<TData> {
   paginationMeta?: PaginationMeta;
   isLoading?: boolean;
   tableKey: string;
-  openModal: () => void;
+  openModal?: (() => void) | false;
   onFilterChange?: (filters: Record<string, any>) => void;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
