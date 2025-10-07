@@ -2,15 +2,14 @@ import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { publicRoutes } from "./config/route-list";
-import { apiLogger } from "./lib/logger";
 
 export async function middleware(request: NextRequest) {
-  const startTime = Date.now();
+  // const startTime = Date.now();
   const pathname = request.nextUrl.pathname;
   const sessionCookie = getSessionCookie(request);
-  const requestId =
-    request.headers.get("x-request-id") ||
-    `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // const requestId =
+  //   request.headers.get("x-request-id") ||
+  //   `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Set request context for logging
   // apiLogger.setRequestId(requestId);
