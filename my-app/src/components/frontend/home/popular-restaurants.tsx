@@ -1,0 +1,175 @@
+'use client';
+
+import { useRef } from 'react';
+import { ChevronLeft, ChevronRight, Star, Clock, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import Link from 'next/link';
+
+// Mock data - replace with actual API call
+const mockRestaurants = [
+  {
+    id: '1',
+    name: 'Pizza Palace - Dhanmondi',
+    location: 'Dhanmondi',
+    cuisine: ['Italian', 'Fast Food'],
+    rating: 4.5,
+    deliveryTime: '30-40 min',
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+    isFeatured: true,
+  },
+  {
+    id: '2',
+    name: 'Pasta Corner - Gulshan',
+    location: 'Gulshan',
+    cuisine: ['Italian', 'Pasta'],
+    rating: 4.7,
+    deliveryTime: '25-35 min',
+    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop',
+    isFeatured: false,
+  },
+  {
+    id: '3',
+    name: 'Burger House - Banani',
+    location: 'Banani',
+    cuisine: ['American', 'Fast Food'],
+    rating: 4.3,
+    deliveryTime: '20-30 min',
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
+    isFeatured: false,
+  },
+  {
+    id: '4',
+    name: 'Italian Bistro - Uttara',
+    location: 'Uttara',
+    cuisine: ['Italian', 'Fine Dining'],
+    rating: 4.8,
+    deliveryTime: '35-45 min',
+    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop',
+    isFeatured: true,
+  },
+  {
+    id: '5',
+    name: 'Taco Fiesta - Mirpur',
+    location: 'Mirpur',
+    cuisine: ['Mexican', 'Fast Food'],
+    rating: 4.6,
+    deliveryTime: '30-40 min',
+    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop',
+    isFeatured: false,
+  },
+];
+
+export function PopularRestaurants() {
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = 300;
+      carouselRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  return (
+    <section className="py-12 bg-white">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#1C1C1C]">
+              Popular Restaurants Near You
+            </h2>
+            <p className="text-[#9CA3AF] mt-1">Top-rated places loved by customers</p>
+          </div>
+          <div className="hidden md:flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scroll('left')}
+              className="border-[#06C167]/20 hover:border-[#06C167] hover:bg-[#06C167]/10"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scroll('right')}
+              className="border-[#06C167]/20 hover:border-[#06C167] hover:bg-[#06C167]/10"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Carousel Container */}
+        <div className="relative">
+          <div
+            ref={carouselRef}
+            className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+          >
+            {mockRestaurants.map((restaurant) => (
+              <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RestaurantCard({ restaurant }: { restaurant: any }) {
+  return (
+    <Link href={`/restaurant/${restaurant.id}`} className="block">
+      <Card className="w-[280px] shrink-0 overflow-hidden hover:shadow-xl transition-all duration-300 group border-[#06C167]/10">
+        <div className="relative h-[180px] overflow-hidden">
+          <Image
+            src={restaurant.image}
+            alt={restaurant.name}
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+          {restaurant.isFeatured && (
+            <Badge className="absolute top-3 right-3 bg-[#FF6B6B] hover:bg-[#FF6B6B]">
+              Featured
+            </Badge>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+        <CardContent className="p-4">
+          <h3 className="text-lg font-semibold text-[#1C1C1C] mb-2 line-clamp-1">
+            {restaurant.name}
+          </h3>
+          <p className="text-sm text-[#9CA3AF] flex items-center mb-3">
+            <MapPin className="h-3 w-3 mr-1" />
+            {restaurant.location}
+          </p>
+          <div className="flex items-center justify-between text-sm mb-3">
+            <span className="flex items-center text-[#1C1C1C] font-medium">
+              <Star className="h-4 w-4 fill-[#FFC107] text-[#FFC107] mr-1" />
+              {restaurant.rating}
+            </span>
+            <span className="flex items-center text-[#9CA3AF]">
+              <Clock className="h-3 w-3 mr-1" />
+              {restaurant.deliveryTime}
+            </span>
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {restaurant.cuisine.map((item: string) => (
+              <Badge
+                key={item}
+                variant="secondary"
+                className="text-xs bg-[#06C167]/10 text-[#06C167] hover:bg-[#06C167]/20"
+              >
+                {item}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}

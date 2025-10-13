@@ -62,4 +62,7 @@ export const ROUTES = {
     ForgotPassword: '/forgot-password',
     VerifyEmail: '/verify-email',
   },
+  Frontend: {
+    Home: '/',
+  },
 } as const;

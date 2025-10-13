@@ -13,6 +13,7 @@ export const publicRoutes = [
   ROUTES.Auth.Signup,
   ROUTES.Auth.ForgotPassword,
   ROUTES.Auth.VerifyEmail,
+  ROUTES.Frontend.Home,
 ];
 
 export const dashboardRoutes = [
