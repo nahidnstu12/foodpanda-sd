@@ -123,7 +123,7 @@ export function PopularRestaurants() {
 
 function RestaurantCard({ restaurant }: { restaurant: any }) {
   return (
-    <Link href={`/restaurant/${restaurant.id}`} className="block">
+    <Link href={`/resturant/${restaurant.id}`} className="block">
       <Card className="w-[280px] shrink-0 overflow-hidden hover:shadow-xl transition-all duration-300 group border-[#06C167]/10">
         <div className="relative h-[180px] overflow-hidden">
           <Image

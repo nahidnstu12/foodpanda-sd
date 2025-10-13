@@ -1,11 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const quickFilters = [
   { emoji: '🍕', label: 'Pizza' },
@@ -13,6 +19,32 @@ const quickFilters = [
   { emoji: '🍔', label: 'Burger' },
   { emoji: '🌮', label: 'Fast Food' },
 ];
+
+const LocationDropdown = () => {
+  const [selectedLocation, setSelectedLocation] = useState<string>('Location');
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button className="bg-transparent text-black hover:bg-transparent outline-none">
+          <MapPin className="h-5 w-5 text-[#06C167] mr-2" />
+          {selectedLocation}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" sideOffset={8}>
+        <DropdownMenuItem onSelect={() => setSelectedLocation('Dhanmondi')}>
+          Dhanmondi
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setSelectedLocation('Mirpur')}>
+          Mirpur
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setSelectedLocation('Uttara')}>
+          Uttara
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export function HeroSection() {
   return (
@@ -31,19 +63,25 @@ export function HeroSection() {
           <Card className="p-2 shadow-lg">
             <div className="flex flex-col md:flex-row items-center gap-2">
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <Button variant="ghost" size="icon" className="shrink-0">
+                {/* <Button variant="ghost" size="icon" className="shrink-0">
                   <MapPin className="h-5 w-5 text-[#06C167]" />
-                </Button>
-                <span className="text-sm text-[#1C1C1C] font-medium">Dhanmondi</span>
+                </Button> */}
+                <LocationDropdown />
               </div>
-              <Separator orientation="vertical" className="hidden md:block h-6" />
+              <Separator
+                orientation="vertical"
+                className="hidden md:block h-6"
+              />
               <div className="relative flex-1 w-full">
                 <Input
                   placeholder="Search for restaurants or dishes..."
                   className="border-0 focus-visible:ring-0 text-base"
                 />
               </div>
-              <Button size="lg" className="bg-[#06C167] hover:bg-[#05a855] w-full md:w-auto">
+              <Button
+                size="lg"
+                className="bg-[#06C167] hover:bg-[#05a855] w-full md:w-auto"
+              >
                 <Search className="h-5 w-5 md:mr-2" />
                 <span className="hidden md:inline">Search</span>
               </Button>

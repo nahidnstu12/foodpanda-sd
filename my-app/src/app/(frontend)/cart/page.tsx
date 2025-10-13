@@ -1,4 +1,4 @@
-import { CheckoutPage } from '@/components/frontend/checkout/checkout-page';
+import { CartPage } from '@/components/frontend/cart/cart-page';
 
 // Mock cart data following your schema
 const mockCartData = {
@@ -69,41 +69,35 @@ const mockCartData = {
       calculated_price: 349,
       special_instructions: null,
     },
+    {
+      id: 'cart-item-3',
+      menu_item_id: 'item-uuid-8',
+      menu_item: {
+        name: 'Chocolate Brownie',
+        image_url:
+          'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=100&h=100&fit=crop',
+        restaurant: {
+          id: 'rest-uuid-1',
+          name: 'Pizza Palace - Dhanmondi',
+        },
+      },
+      quantity: 1,
+      base_price: 120,
+      selected_choices: [],
+      calculated_price: 120,
+      special_instructions: 'Extra chocolate sauce',
+    },
   ],
   restaurant: {
     id: 'rest-uuid-1',
     name: 'Pizza Palace - Dhanmondi',
     delivery_fee: 50,
   },
-  subtotal: 1467, // (559 * 2) + 349
+  subtotal: 1467, // (559 * 2) + 349 + 120
   delivery_fee: 50,
   total: 1517,
 };
 
-// Mock addresses
-const mockAddresses = [
-  {
-    id: 'addr-uuid-1',
-    label: 'Home',
-    street: 'House 23, Road 5',
-    area: 'Dhanmondi',
-    city: 'Dhaka',
-    postal_code: '1209',
-    phone: '+880 1712-345678',
-    is_default: true,
-  },
-  {
-    id: 'addr-uuid-2',
-    label: 'Office',
-    street: 'Plot 15, Sector 7',
-    area: 'Uttara',
-    city: 'Dhaka',
-    postal_code: '1230',
-    phone: '+880 1712-345679',
-    is_default: false,
-  },
-];
-
-export default function Checkout() {
-  return <CheckoutPage cartData={mockCartData} addresses={mockAddresses} />;
+export default function Cart() {
+  return <CartPage cartData={mockCartData} />;
 }
