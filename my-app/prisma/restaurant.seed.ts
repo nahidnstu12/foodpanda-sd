@@ -2,13 +2,16 @@
 // FILE: seed/restaurant.seed.ts
 // ============================================================================
 
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma"; // Adjust to your prisma instance
-import { assignUserRole, createUserProfile } from "@/actions/auth";
-import { UserRole } from "@/helpers/user.enum";
+import { auth } from '@/lib/auth';
+import prisma from '@/lib/prisma'; // Adjust to your prisma instance
+import { assignUserRole, createUserProfile } from '@/actions/auth';
+import { UserRole } from '@/helpers/user.enum';
 
 import {
   addPriceVariation,
+  addRestaurantSpecificPriceVariation,
+  shuffleArray,
+  getRandomSubset,
   generateRating,
   isAvailable,
   pickRandom,
@@ -18,11 +21,11 @@ import {
   generateLogoUrl,
   generateCoverImageUrl,
   locationSuffixes,
-} from "./utils/faker.helper";
-import { restaurantTemplates } from "./data/restaurants";
-import { pastaTemplates, pizzaTemplates } from "./data/menu-item";
-import { customizationPatterns } from "./data/customizations";
-import { PartnerProfile } from "../generated/prisma";
+} from './utils/faker.helper';
+import { restaurantTemplates } from './data/restaurants';
+import { pastaTemplates, pizzaTemplates } from './data/menu-item';
+import { customizationPatterns } from './data/customizations';
+import { PartnerProfile } from '../generated/prisma';
 
 // ============================================================================
 // PHASE 1: Create Partner Users
@@ -35,7 +38,7 @@ async function createPartnerUsers(count: number) {
 
   for (let i = 0; i < count; i++) {
     const email = `partner${i + 1}@restaurant.com`;
-    const password = "Partner@123"; // Use env variable in production
+    const password = 'Partner@123'; // Use env variable in production
     const name = `Partner ${i + 1}`;
 
     try {
@@ -44,7 +47,7 @@ async function createPartnerUsers(count: number) {
       });
 
       await assignUserRole(signUp.user.id, UserRole.PARTNER);
-      await createUserProfile(signUp.user.id, UserRole.PARTNER);
+      // await createUserProfile(signUp.user.id, UserRole.PARTNER);
 
       partnerUsers.push({
         id: signUp.user.id,
@@ -58,7 +61,7 @@ async function createPartnerUsers(count: number) {
     }
   }
 
-  console.log("\n✅ Partner users created\n");
+  console.log('\n✅ Partner users created\n');
   return partnerUsers;
 }
 
@@ -69,7 +72,7 @@ async function createPartnerUsers(count: number) {
 async function createPartnerProfiles(
   partnerUsers: { id: string; email?: string; name?: string }[]
 ) {
-  console.log("📝 Creating partner profiles...");
+  console.log('📝 Creating partner profiles...');
 
   const profiles: PartnerProfile[] = [];
   const errors: Array<{
@@ -93,10 +96,12 @@ async function createPartnerProfiles(
         process.stdout.write(
           `\r  • Skipped existing profile ${profiles.length}/${
             partnerUsers.length
-          } (user: ${user.id}${user.email ? ", " + user.email : ""})`
+          } (user: ${user.id}${user.email ? ', ' + user.email : ''})`
         );
         continue;
       }
+
+      const template = pickRandom(restaurantTemplates);
 
       const profile: PartnerProfile = await prisma.partnerProfile.create({
         data: {
@@ -105,15 +110,15 @@ async function createPartnerProfiles(
             `Restaurant Business ${profiles.length + 1}`
           ),
           contact_number: generatePhoneNumber(),
-          restaurant_type: "Italian",
+          restaurant_type: template.type,
           operating_hours: {
-            monday: { open: "10:00", close: "22:00" },
-            tuesday: { open: "10:00", close: "22:00" },
-            wednesday: { open: "10:00", close: "22:00" },
-            thursday: { open: "10:00", close: "22:00" },
-            friday: { open: "10:00", close: "23:00" },
-            saturday: { open: "10:00", close: "23:00" },
-            sunday: { open: "11:00", close: "21:00" },
+            monday: { open: '10:00', close: '22:00' },
+            tuesday: { open: '10:00', close: '22:00' },
+            wednesday: { open: '10:00', close: '22:00' },
+            thursday: { open: '10:00', close: '22:00' },
+            friday: { open: '10:00', close: '23:00' },
+            saturday: { open: '10:00', close: '23:00' },
+            sunday: { open: '11:00', close: '21:00' },
           },
         },
       });
@@ -122,17 +127,17 @@ async function createPartnerProfiles(
       process.stdout.write(
         `\r  ✓ Created profile ${profiles.length}/${
           partnerUsers.length
-        } (user: ${user.id}${user.email ? ", " + user.email : ""})`
+        } (user: ${user.id}${user.email ? ', ' + user.email : ''})`
       );
     } catch (error: any) {
       // Capture and log rich error info
       errors.push({ index: i, userId: user.id, email: user.email, error });
 
       // Specific handling for Prisma unique constraint
-      if (error && error.code === "P2002") {
+      if (error && error.code === 'P2002') {
         console.error(
           `\n  ✗ Unique constraint violation for user ${user.id}${
-            user.email ? " (" + user.email + ")" : ""
+            user.email ? ' (' + user.email + ')' : ''
           } on target ${JSON.stringify(error?.meta?.target)}`
         );
 
@@ -150,7 +155,7 @@ async function createPartnerProfiles(
       } else {
         console.error(
           `\n  ✗ Failed to create profile for user ${user.id}${
-            user.email ? " (" + user.email + ")" : ""
+            user.email ? ' (' + user.email + ')' : ''
           }:`,
           error
         );
@@ -158,15 +163,15 @@ async function createPartnerProfiles(
     }
   }
 
-  console.log("\n✅ Partner profiles processed\n");
+  console.log('\n✅ Partner profiles processed\n');
 
   if (errors.length > 0) {
-    console.warn("⚠️ Profile creation errors summary:");
+    console.warn('⚠️ Profile creation errors summary:');
     for (const e of errors) {
       console.warn(
         `  - index=${e.index} user=${e.userId}${
-          e.email ? " (" + e.email + ")" : ""
-        } code=${e?.error?.code ?? "unknown"}`
+          e.email ? ' (' + e.email + ')' : ''
+        } code=${e?.error?.code ?? 'unknown'}`
       );
     }
   }
@@ -179,35 +184,66 @@ async function createPartnerProfiles(
 // ============================================================================
 
 async function createRestaurants(profiles: { id: string }[]) {
-  console.log("📝 Creating restaurants...");
+  console.log('📝 Creating restaurants...');
 
   const restaurants = [];
+  const restaurantStyles = [
+    'Family-friendly',
+    'Upscale',
+    'Casual',
+    'Fast-casual',
+    'Fine dining',
+    'Street food',
+    'Fusion',
+    'Traditional',
+    'Modern',
+    'Rustic',
+  ];
 
   for (let i = 0; i < profiles.length; i++) {
     const template = pickRandom(restaurantTemplates);
     const location = pickRandom(locationSuffixes);
+    const style = pickRandom(restaurantStyles);
     const name = generateRestaurantName(template.namePattern, location);
+
+    // Add style-specific description enhancements
+    const styleDescriptions = {
+      'Family-friendly': 'Perfect for families with kids',
+      Upscale: 'Elegant dining experience',
+      Casual: 'Relaxed atmosphere',
+      'Fast-casual': 'Quick service, quality food',
+      'Fine dining': 'Sophisticated culinary experience',
+      'Street food': 'Authentic street-style flavors',
+      Fusion: 'Creative blend of cuisines',
+      Traditional: 'Classic recipes passed down',
+      Modern: 'Contemporary twist on classics',
+      Rustic: 'Homestyle cooking',
+    };
+
+    const enhancedDescription = `${template.description}. ${
+      styleDescriptions[style as keyof typeof styleDescriptions]
+    }.`;
 
     const restaurant = await prisma.restaurant.create({
       data: {
         partner_profile_id: profiles[i].id,
         name,
-        description: template.description,
+        description: enhancedDescription,
         logo_url: generateLogoUrl(name),
-        cover_image_url: generateCoverImageUrl(template.cuisine),
+        cover_image_url: template.cover_image_url,
         cuisine: template.cuisine,
         rating: generateRating(),
         is_active: true,
       },
     });
 
-    restaurants.push({ ...restaurant, type: template.type });
+    restaurants.push({ ...restaurant, type: template.type, style });
     process.stdout.write(
       `\r  ✓ Created restaurant ${i + 1}/${profiles.length}`
     );
   }
 
-  console.log("\n✅ Restaurants created\n");
+  console.log('\n✅ Restaurants created\n');
   return restaurants;
 }
 
@@ -216,12 +252,12 @@ async function createRestaurants(profiles: { id: string }[]) {
 // ============================================================================
 
 async function createMenus(restaurants: { id: string }[]) {
-  console.log("📝 Creating menus...");
+  console.log('📝 Creating menus...');
 
   const menusData = restaurants.map((restaurant) => ({
     restaurant_id: restaurant.id,
-    name: "Main Menu",
-    description: "Our full menu with pizzas, pastas, and more",
+    name: 'Main Menu',
+    description: 'Our full menu with pizzas, pastas, and more',
     is_active: true,
   }));
 
@@ -246,7 +282,7 @@ async function createMenus(restaurants: { id: string }[]) {
 // ============================================================================
 
 async function createCategories(menus: any[]) {
-  console.log("📝 Creating categories...");
+  console.log('📝 Creating categories...');
 
   const categoriesData = [];
 
@@ -255,13 +291,13 @@ async function createCategories(menus: any[]) {
     categoriesData.push(
       {
         menu_id: menu.id,
-        name: "Classic Pizzas",
-        description: "Traditional and specialty pizzas",
+        name: 'Classic Pizzas',
+        description: 'Traditional and specialty pizzas',
       },
       {
         menu_id: menu.id,
-        name: "Gourmet Pastas",
-        description: "Fresh pasta dishes made to order",
+        name: 'Gourmet Pastas',
+        description: 'Fresh pasta dishes made to order',
       }
     );
   }
@@ -290,30 +326,119 @@ async function createCategories(menus: any[]) {
 // ============================================================================
 
 async function createMenuItems(categories: any[]) {
-  console.log("📝 Creating menu items...");
+  console.log('📝 Creating menu items...');
 
   const menuItemsData = [];
+  const restaurantVariations = new Map(); // Track restaurant-specific variations
 
   for (const category of categories) {
-    const isPizzaCategory = category.name.toLowerCase().includes("pizza");
+    const isPizzaCategory = category.name.toLowerCase().includes('pizza');
     const templates = isPizzaCategory ? pizzaTemplates : pastaTemplates;
-    const itemType = isPizzaCategory ? "pizza" : "pasta";
+    const itemType = isPizzaCategory ? 'pizza' : 'pasta';
+    const restaurantId = category.menu.restaurant_id;
 
-    // Create 10-12 items per category
-    const itemCount = 10 + Math.floor(Math.random() * 3);
-    const selectedTemplates = templates.slice(0, itemCount);
+    // Get or create restaurant-specific variations
+    if (!restaurantVariations.has(restaurantId)) {
+      restaurantVariations.set(restaurantId, {
+        prefixes: [
+          'Special',
+          'Signature',
+          'Classic',
+          'Deluxe',
+          'Premium',
+          "Chef's",
+          'House',
+          'Gourmet',
+        ],
+        suffixes: [
+          'Delight',
+          'Blast',
+          'Supreme',
+          'Fiesta',
+          'Special',
+          'Classic',
+          'Fusion',
+        ],
+        skipItems: Math.floor(Math.random() * 3) + 1, // Skip 1-3 items
+        priceMultiplier: 0.9 + Math.random() * 0.2, // ±10% restaurant-specific pricing
+      });
+    }
 
-    for (const template of selectedTemplates) {
+    const variations = restaurantVariations.get(restaurantId);
+
+    // Shuffle templates for this restaurant and get random subset
+    const selectedTemplates = getRandomSubset(templates, 10, 15);
+
+    // Randomly skip some items for uniqueness
+    const itemsToSkip = Math.min(
+      variations.skipItems,
+      Math.floor(selectedTemplates.length * 0.2)
+    );
+    const skipIndices = new Set();
+    while (skipIndices.size < itemsToSkip) {
+      skipIndices.add(Math.floor(Math.random() * selectedTemplates.length));
+    }
+
+    for (let i = 0; i < selectedTemplates.length; i++) {
+      if (skipIndices.has(i)) continue; // Skip this item
+
+      const template = selectedTemplates[i];
+
+      // Add restaurant-specific name variations
+      const shouldAddPrefix = Math.random() < 0.3; // 30% chance
+      const shouldAddSuffix = Math.random() < 0.2; // 20% chance
+
+      let itemName = template.name;
+      if (shouldAddPrefix) {
+        const prefix = pickRandom(variations.prefixes);
+        itemName = `${prefix} ${itemName}`;
+      }
+      if (shouldAddSuffix) {
+        const suffix = pickRandom(variations.suffixes);
+        itemName = `${itemName} ${suffix}`;
+      }
+
+      // Restaurant-specific price variation
+      const finalPrice = addRestaurantSpecificPriceVariation(
+        template.basePrice,
+        variations.priceMultiplier
+      );
+
+      // Restaurant-specific description enhancement
+      const descriptionEnhancements = [
+        'Made with fresh ingredients',
+        'Prepared to perfection',
+        'Our signature recipe',
+        'Handcrafted with love',
+        "Chef's special preparation",
+      ];
+
+      let enhancedDescription = template.description;
+      if (Math.random() < 0.4) {
+        // 40% chance
+        const enhancement = pickRandom(descriptionEnhancements);
+        enhancedDescription = `${enhancement}. ${template.description}`;
+      }
+
       menuItemsData.push({
         category_id: category.id,
-        restaurant_id: category.menu.restaurant_id, // Denormalized
-        name: template.name,
-        description: template.description,
-        price: addPriceVariation(template.basePrice),
-        image_url: `https://source.unsplash.com/400x300/?${template.name.replace(
-          /\s/g,
-          "-"
-        )},food`,
+        restaurant_id: restaurantId,
+        name: itemName,
+        description: enhancedDescription,
+        price: finalPrice,
+        // image_url: `https://source.unsplash.com/400x300/?${template.name.replace(
+        //   /\s/g,
+        //   '-'
+        // )},food`,
+        image_url: isPizzaCategory
+          ? `https://foodish-api.com/images/pizza/pizza${+(
+              Math.random() * 19 +
+              1
+            ).toFixed(0)}.jpg`
+          : `https://foodish-api.com/images/pasta/pasta${+(
+              Math.random() * 20 +
+              1
+            ).toFixed(0)}.jpg`,
         search_tags: template.tags,
         is_available: isAvailable(0.9),
       });
@@ -346,7 +471,7 @@ async function createMenuItems(categories: any[]) {
 // ============================================================================
 
 async function createCustomizationsAndChoices(menuItems: any[]) {
-  console.log("📝 Creating customizations and choices...");
+  console.log('📝 Creating customizations and choices...');
 
   let customizationCount = 0;
   let choiceCount = 0;
@@ -355,8 +480,8 @@ async function createCustomizationsAndChoices(menuItems: any[]) {
   const BATCH_SIZE = 50;
 
   // Strongly-typed customization keys for safer indexing
-  const pizzaTypes = ["size", "crust", "toppings", "cheese"] as const;
-  const pastaTypes = ["portion", "spiceLevel", "addOns"] as const;
+  const pizzaTypes = ['size', 'crust', 'toppings', 'cheese'] as const;
+  const pastaTypes = ['portion', 'spiceLevel', 'addOns'] as const;
 
   type CustomizationPattern = {
     name: string;
@@ -371,8 +496,8 @@ async function createCustomizationsAndChoices(menuItems: any[]) {
 
     await prisma.$transaction(
       batch.map((item) => {
-        const isPizza = item.category.name.toLowerCase().includes("pizza");
-        const itemType = isPizza ? "pizza" : "pasta";
+        const isPizza = item.category.name.toLowerCase().includes('pizza');
+        const itemType = isPizza ? 'pizza' : 'pasta';
         const patterns = customizationPatterns[itemType];
 
         // Determine which customization types this item should have
@@ -429,8 +554,8 @@ async function createCustomizationsAndChoices(menuItems: any[]) {
 // ============================================================================
 
 export async function seedRestaurantSystem() {
-  console.log("\n🌱 Starting Restaurant System Seeding...\n");
-  console.log("=".repeat(50));
+  console.log('\n🌱 Starting Restaurant System Seeding...\n');
+  console.log('='.repeat(50));
 
   try {
     // PHASE 1: Create 20 partner users
@@ -454,9 +579,9 @@ export async function seedRestaurantSystem() {
     // PHASE 7: Create customizations and choices
     await createCustomizationsAndChoices(menuItems);
 
-    console.log("=".repeat(50));
-    console.log("\n✅ Restaurant System Seeding Completed!\n");
-    console.log("📊 Summary:");
+    console.log('='.repeat(50));
+    console.log('\n✅ Restaurant System Seeding Completed!\n');
+    console.log('📊 Summary:');
     console.log(`   • Partner Users: ${partnerUsers.length}`);
     console.log(`   • Restaurants: ${restaurants.length}`);
     console.log(`   • Menus: ${menus.length}`);
@@ -465,7 +590,7 @@ export async function seedRestaurantSystem() {
     console.log(`   • Estimated Customizations: ${menuItems.length * 3}`);
     console.log(`   • Estimated Choices: ${menuItems.length * 15}\n`);
   } catch (error) {
-    console.error("\n❌ Seeding failed:", error);
+    console.error('\n❌ Seeding failed:', error);
     throw error;
   }
 }
@@ -476,10 +601,10 @@ export async function seedRestaurantSystem() {
 
 seedRestaurantSystem()
   .then(() => {
-    console.log("🎉 Seed process completed successfully");
+    console.log('🎉 Seed process completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error("💥 Seed process failed:", error);
+    console.error('💥 Seed process failed:', error);
     process.exit(1);
   });

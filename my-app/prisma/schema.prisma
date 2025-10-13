@@ -220,7 +220,7 @@ model Address {
   is_primary         Boolean      @default(false)
   status             CommonStatus @default(ACTIVE)
 
-  user            User?           @relation(fields: [user_id], references: [id])
+  user            User?           @relation(fields: [user_id], references: [id], onDelete: Cascade)
   partner_profile PartnerProfile? @relation(fields: [partner_profile_id], references: [id])
 
   @@index([city, state])
@@ -241,7 +241,7 @@ model Restaurant {
   updated_at         DateTime  @updatedAt
   deleted_at         DateTime?
 
-  partner_profile PartnerProfile @relation(fields: [partner_profile_id], references: [id])
+  partner_profile PartnerProfile @relation(fields: [partner_profile_id], references: [id], onDelete: Cascade)
   menus           Menu[] // A restaurant can have multiple menus
 
   @@index([cuisine])
@@ -259,7 +259,7 @@ model Menu {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  restaurant Restaurant @relation(fields: [restaurant_id], references: [id])
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
   categories Category[] // A menu is organized by categories
 
   @@index([restaurant_id, is_active]) // Active menus per restaurant
@@ -275,7 +275,7 @@ model Category {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  menu       Menu       @relation(fields: [menu_id], references: [id])
+  menu       Menu       @relation(fields: [menu_id], references: [id], onDelete: Cascade)
   menu_items MenuItem[] // A category contains multiple items
 
   @@index([menu_id]) // Fast menu lookup
@@ -296,7 +296,7 @@ model MenuItem {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  category       Category        @relation(fields: [category_id], references: [id])
+  category       Category        @relation(fields: [category_id], references: [id], onDelete: Cascade)
   customizations Customization[] // An item can have customizations
 
   @@index([category_id]) // Fast category filtering
@@ -315,7 +315,7 @@ model Customization {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  menu_item MenuItem @relation(fields: [menu_item_id], references: [id])
+  menu_item MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
   choices   Choice[] // A customization has multiple choices
 
   @@map("customizations")
@@ -331,7 +331,7 @@ model Choice {
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
-  customization Customization @relation(fields: [customization_id], references: [id])
+  customization Customization @relation(fields: [customization_id], references: [id], onDelete: Cascade)
 
   @@map("choices")
 }

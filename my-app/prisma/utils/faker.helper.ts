@@ -10,6 +10,36 @@ export const addPriceVariation = (basePrice: number): number => {
   return Math.round(variation * 100) / 100; // Round to 2 decimals
 };
 
+export const addRestaurantSpecificPriceVariation = (
+  basePrice: number,
+  restaurantMultiplier: number
+): number => {
+  // Apply restaurant-specific multiplier first, then add individual item variation
+  const restaurantPrice = basePrice * restaurantMultiplier;
+  const variation = restaurantPrice * (0.95 + Math.random() * 0.1); // ±5% individual variation
+  return Math.round(variation * 100) / 100;
+};
+
+export const shuffleArray = <T>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+export const getRandomSubset = <T>(
+  array: T[],
+  minCount: number,
+  maxCount: number
+): T[] => {
+  const shuffled = shuffleArray(array);
+  const count =
+    minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
+  return shuffled.slice(0, count);
+};
+
 export const generateRating = (): number => {
   // Generate rating between 3.5 and 5.0
   const rating = 3.5 + Math.random() * 1.5;
@@ -52,29 +82,29 @@ export const generateCoverImageUrl = (cuisine: string): string => {
 };
 
 export const locationSuffixes = [
-    "Dhanmondi",
-    "Gulshan",
-    "Banani",
-    "Uttara",
-    "Mirpur",
-    "Mohammadpur",
-    "Bashundhara",
-    "Motijheel",
-    "Lalmatia",
-    "Badda",
-    "Baridhara",
-    "Tejgaon",
-    "Farmgate",
-    "Kawran Bazar",
-    "Mohakhali",
-    "Panthapath",
-    "Shantinagar",
-    "Malibagh",
-    "Rampura",
-    "Khilgaon",
-    "Banasree",
-    "Elephant Road",
-    "New Market",
-    "Azimpur",
-    "Green Road",
-  ];
+  'Dhanmondi',
+  'Gulshan',
+  'Banani',
+  'Uttara',
+  'Mirpur',
+  'Mohammadpur',
+  'Bashundhara',
+  'Motijheel',
+  'Lalmatia',
+  'Badda',
+  'Baridhara',
+  'Tejgaon',
+  'Farmgate',
+  'Kawran Bazar',
+  'Mohakhali',
+  'Panthapath',
+  'Shantinagar',
+  'Malibagh',
+  'Rampura',
+  'Khilgaon',
+  'Banasree',
+  'Elephant Road',
+  'New Market',
+  'Azimpur',
+  'Green Road',
+];
