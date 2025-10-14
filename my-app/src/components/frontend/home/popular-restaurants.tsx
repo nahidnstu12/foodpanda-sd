@@ -1,63 +1,69 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { ChevronLeft, ChevronRight, Star, Clock, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useRef } from "react";
+import { ChevronLeft, ChevronRight, Star, Clock, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import Link from "next/link";
 
 // Mock data - replace with actual API call
+// Adjusted to align with Prisma schema fields: cover_image_url (string), cuisine (string)
 const mockRestaurants = [
   {
-    id: '1',
-    name: 'Pizza Palace - Dhanmondi',
-    location: 'Dhanmondi',
-    cuisine: ['Italian', 'Fast Food'],
+    id: "1",
+    name: "Pizza Palace - Dhanmondi",
+    location: "Dhanmondi",
+    cuisine: "Italian, Fast Food",
     rating: 4.5,
-    deliveryTime: '30-40 min',
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+    deliveryTime: "30-40 min",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop",
     isFeatured: true,
   },
   {
-    id: '2',
-    name: 'Pasta Corner - Gulshan',
-    location: 'Gulshan',
-    cuisine: ['Italian', 'Pasta'],
+    id: "2",
+    name: "Pasta Corner - Gulshan",
+    location: "Gulshan",
+    cuisine: "Italian, Pasta",
     rating: 4.7,
-    deliveryTime: '25-35 min',
-    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop',
+    deliveryTime: "25-35 min",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop",
     isFeatured: false,
   },
   {
-    id: '3',
-    name: 'Burger House - Banani',
-    location: 'Banani',
-    cuisine: ['American', 'Fast Food'],
+    id: "3",
+    name: "Burger House - Banani",
+    location: "Banani",
+    cuisine: "American, Fast Food",
     rating: 4.3,
-    deliveryTime: '20-30 min',
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
+    deliveryTime: "20-30 min",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop",
     isFeatured: false,
   },
   {
-    id: '4',
-    name: 'Italian Bistro - Uttara',
-    location: 'Uttara',
-    cuisine: ['Italian', 'Fine Dining'],
+    id: "4",
+    name: "Italian Bistro - Uttara",
+    location: "Uttara",
+    cuisine: "Italian, Fine Dining",
     rating: 4.8,
-    deliveryTime: '35-45 min',
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop',
+    deliveryTime: "35-45 min",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop",
     isFeatured: true,
   },
   {
-    id: '5',
-    name: 'Taco Fiesta - Mirpur',
-    location: 'Mirpur',
-    cuisine: ['Mexican', 'Fast Food'],
+    id: "5",
+    name: "Taco Fiesta - Mirpur",
+    location: "Mirpur",
+    cuisine: "Mexican, Fast Food",
     rating: 4.6,
-    deliveryTime: '30-40 min',
-    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop',
+    deliveryTime: "30-40 min",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop",
     isFeatured: false,
   },
 ];
@@ -65,12 +71,12 @@ const mockRestaurants = [
 export function PopularRestaurants() {
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  const scroll = (direction: 'left' | 'right') => {
+  const scroll = (direction: "left" | "right") => {
     if (carouselRef.current) {
       const scrollAmount = 300;
       carouselRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
       });
     }
   };
@@ -83,13 +89,15 @@ export function PopularRestaurants() {
             <h2 className="text-2xl md:text-3xl font-bold text-[#1C1C1C]">
               Popular Restaurants Near You
             </h2>
-            <p className="text-[#9CA3AF] mt-1">Top-rated places loved by customers</p>
+            <p className="text-[#9CA3AF] mt-1">
+              Top-rated places loved by customers
+            </p>
           </div>
           <div className="hidden md:flex gap-2">
             <Button
               variant="outline"
               size="icon"
-              onClick={() => scroll('left')}
+              onClick={() => scroll("left")}
               className="border-[#06C167]/20 hover:border-[#06C167] hover:bg-[#06C167]/10"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -97,7 +105,7 @@ export function PopularRestaurants() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => scroll('right')}
+              onClick={() => scroll("right")}
               className="border-[#06C167]/20 hover:border-[#06C167] hover:bg-[#06C167]/10"
             >
               <ChevronRight className="h-5 w-5" />
@@ -127,7 +135,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
       <Card className="w-[280px] shrink-0 overflow-hidden hover:shadow-xl transition-all duration-300 group border-[#06C167]/10">
         <div className="relative h-[180px] overflow-hidden">
           <Image
-            src={restaurant.image}
+            src={restaurant.cover_image_url}
             alt={restaurant.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-300"
@@ -158,15 +166,19 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
             </span>
           </div>
           <div className="flex gap-1 flex-wrap">
-            {restaurant.cuisine.map((item: string) => (
-              <Badge
-                key={item}
-                variant="secondary"
-                className="text-xs bg-[#06C167]/10 text-[#06C167] hover:bg-[#06C167]/20"
-              >
-                {item}
-              </Badge>
-            ))}
+            {(restaurant.cuisine || "")
+              .split(",")
+              .map((c: string) => c.trim())
+              .filter(Boolean)
+              .map((item: string) => (
+                <Badge
+                  key={item}
+                  variant="secondary"
+                  className="text-xs bg-[#06C167]/10 text-[#06C167] hover:bg-[#06C167]/20"
+                >
+                  {item}
+                </Badge>
+              ))}
           </div>
         </CardContent>
       </Card>

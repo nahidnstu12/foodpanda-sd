@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { MenuItemCard } from './menu-item-card';
+import { MenuItemCard } from "./menu-item-card";
 
 interface MenuSectionProps {
   category: any;
@@ -19,7 +19,7 @@ export function MenuSection({ category }: MenuSectionProps) {
       </div>
 
       <div className="space-y-4">
-        {category.items.map((item: any) => (
+        {(category.menu_items || []).map((item: any) => (
           <MenuItemCard key={item.id} item={item} />
         ))}
       </div>

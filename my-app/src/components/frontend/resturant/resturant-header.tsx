@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { Star, Clock, MapPin, Share2, Heart, Info } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import Image from "next/image";
+import { Star, Clock, MapPin, Share2, Heart, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 interface RestaurantHeaderProps {
   restaurant: any;
@@ -16,14 +16,14 @@ export function RestaurantHeader({ restaurant }: RestaurantHeaderProps) {
       {/* Cover Image */}
       <div className="relative h-[250px] md:h-[350px] w-full overflow-hidden">
         <Image
-          src={restaurant.coverImage}
+          src={restaurant.cover_image_url}
           alt={restaurant.name}
           fill
           className="object-cover"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        
+
         {/* Status Badge */}
         {restaurant.isOpen ? (
           <Badge className="absolute top-4 right-4 bg-[#06C167] text-white px-4 py-2">
@@ -43,7 +43,7 @@ export function RestaurantHeader({ restaurant }: RestaurantHeaderProps) {
           <div className="mb-4">
             <div className="relative h-32 w-32 md:h-40 md:w-40 rounded-2xl overflow-hidden border-4 border-white shadow-xl">
               <Image
-                src={restaurant.logoImage}
+                src={restaurant.logo_url}
                 alt={restaurant.name}
                 fill
                 className="object-cover"
@@ -90,17 +90,21 @@ export function RestaurantHeader({ restaurant }: RestaurantHeaderProps) {
                   </div>
                 </div>
 
-                {/* Cuisine Tags */}
+                {/* Cuisine Tags (schema: single string) */}
                 <div className="flex flex-wrap gap-2">
-                  {restaurant.cuisines.map((cuisine: string) => (
-                    <Badge
-                      key={cuisine}
-                      variant="secondary"
-                      className="bg-[#06C167]/10 text-[#06C167] hover:bg-[#06C167]/20"
-                    >
-                      {cuisine}
-                    </Badge>
-                  ))}
+                  {(restaurant.cuisine || "")
+                    .split(",")
+                    .map((c: string) => c.trim())
+                    .filter(Boolean)
+                    .map((cuisine: string) => (
+                      <Badge
+                        key={cuisine}
+                        variant="secondary"
+                        className="bg-[#06C167]/10 text-[#06C167] hover:bg-[#06C167]/20"
+                      >
+                        {cuisine}
+                      </Badge>
+                    ))}
                 </div>
               </div>
 

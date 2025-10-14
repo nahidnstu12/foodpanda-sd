@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   Clock,
@@ -13,11 +13,11 @@ import {
   Plus,
   ShoppingCart,
   Star,
-} from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useMemo, useState } from 'react';
-import CustomizationGroup from './customization-group';
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState, useEffect } from "react";
+import CustomizationGroup from "./customization-group";
 
 interface MenuItemDetailProps {
   menuItem: any;
@@ -28,10 +28,10 @@ export function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
   const [selectedChoices, setSelectedChoices] = useState<
     Record<string, string[]>
   >({});
-  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState("");
 
   // Initialize required customizations
-  useState(() => {
+  useEffect(() => {
     const initial: Record<string, string[]> = {};
     menuItem.customizations.forEach((custom: any) => {
       if (custom.is_required && custom.choices.length > 0) {
@@ -47,7 +47,7 @@ export function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
       }
     });
     setSelectedChoices(initial);
-  });
+  }, [menuItem.customizations]);
 
   // Calculate total price
   const calculatedPrice = useMemo(() => {
@@ -126,7 +126,7 @@ export function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
       special_instructions: specialInstructions || undefined,
     };
 
-    console.log('Adding to cart:', cartItem);
+    console.log("Adding to cart:", cartItem);
     // TODO: Add to cart context/state
   };
 
@@ -157,7 +157,7 @@ export function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
                 className="object-cover"
                 priority
               />
-              {menuItem.search_tags.includes('vegetarian') && (
+              {menuItem.search_tags.includes("vegetarian") && (
                 <Badge className="absolute top-4 left-4 bg-[#06C167] hover:bg-[#06C167] text-white">
                   🌱 Vegetarian
                 </Badge>
@@ -303,9 +303,9 @@ export function MenuItemDetail({ menuItem }: MenuItemDetailProps) {
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   {!menuItem.is_available
-                    ? 'Not Available'
+                    ? "Not Available"
                     : !isValid
-                    ? 'Select Required Options'
+                    ? "Select Required Options"
                     : `Add to Cart • ৳ ${calculatedPrice}`}
                 </Button>
               </CardContent>

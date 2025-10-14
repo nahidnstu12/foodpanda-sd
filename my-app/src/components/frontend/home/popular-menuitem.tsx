@@ -10,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 // Mock data - replace with actual API call
+// Adjusted to align with Prisma schema fields: image_url, search_tags, is_available
 const mockMenuItems = Array.from({ length: 20 }, (_, i) => ({
   id: `item-${i + 1}`,
   name:
@@ -21,13 +22,14 @@ const mockMenuItems = Array.from({ length: 20 }, (_, i) => ({
   restaurant: "Pizza Palace - Dhanmondi",
   price: 299 + i * 50,
   rating: 4.2 + (i % 8) * 0.1,
-  image:
+  image_url:
     i % 3 === 0
       ? "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop"
       : i % 3 === 1
       ? "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=300&h=300&fit=crop"
       : "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=300&fit=crop",
-  tags: i % 2 === 0 ? ["vegetarian"] : ["bestseller"],
+  search_tags: i % 2 === 0 ? ["vegetarian"] : ["bestseller"],
+  is_available: true,
   category: i % 3 === 0 ? "pizza" : i % 3 === 1 ? "pasta" : "burger",
 }));
 
@@ -119,21 +121,21 @@ export function PopularMenuItems() {
 
 function MenuItemCard({ item }: { item: any }) {
   return (
-    <Link href={`/menu-item/${item.id}`}>
+    <Link href={`/resturant/2/${item.id}`}>
       <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group border-[#06C167]/10">
         <div className="relative h-[240px] overflow-hidden">
           <Image
-            src={item.image}
+            src={item.image_url}
             alt={item.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-300"
           />
           {/* top-left stacked badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {item.tags.includes("vegetarian") && (
+            {item.search_tags.includes("vegetarian") && (
               <Badge className="bg-[#06C167] hover:bg-[#06C167]">🌱 Veg</Badge>
             )}
-            {item.tags.includes("bestseller") && (
+            {item.search_tags.includes("bestseller") && (
               <Badge className="bg-[#FF6B6B] hover:bg-[#FF6B6B]">
                 ⭐ Bestseller
               </Badge>

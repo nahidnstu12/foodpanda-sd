@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Star, Plus, Minus } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Star, Plus, Minus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface MenuItemCardProps {
   item: any;
@@ -30,8 +30,8 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
     <Link href={`/resturant/2/${item.id}`}>
       <Card
         className={cn(
-          'overflow-hidden hover:shadow-lg transition-all duration-300 border-[#06C167]/10',
-          !item.isAvailable && 'opacity-60'
+          "overflow-hidden hover:shadow-lg transition-all duration-300 border-[#06C167]/10",
+          !item.is_available && "opacity-60"
         )}
       >
         <CardContent className="p-4">
@@ -42,7 +42,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
                 <h3 className="text-lg font-semibold text-[#1C1C1C] line-clamp-1">
                   {item.name}
                 </h3>
-                {item.tags.includes('vegetarian') && (
+                {item.search_tags.includes("vegetarian") && (
                   <Badge className="shrink-0 bg-[#06C167] hover:bg-[#06C167] px-2 py-0 text-xs">
                     🌱
                   </Badge>
@@ -62,17 +62,17 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
                     </span>
                   </div>
                 )}
-                {item.tags.includes('bestseller') && (
+                {item.search_tags.includes("bestseller") && (
                   <Badge className="bg-[#FF6B6B] hover:bg-[#FF6B6B] text-xs">
                     Bestseller
                   </Badge>
                 )}
-                {item.tags.includes('popular') && (
+                {item.search_tags.includes("popular") && (
                   <Badge className="bg-[#06C167]/10 text-[#06C167] hover:bg-[#06C167]/20 text-xs">
                     Popular
                   </Badge>
                 )}
-                {item.tags.includes('spicy') && (
+                {item.search_tags.includes("spicy") && (
                   <Badge variant="secondary" className="text-xs">
                     🌶️ Spicy
                   </Badge>
@@ -84,7 +84,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
                   ৳ {item.price}
                 </span>
 
-                {item.isAvailable ? (
+                {item.is_available ? (
                   quantity === 0 ? (
                     <Button
                       size="sm"
@@ -137,7 +137,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
             {/* Item Image - Right Side */}
             <div className="relative h-32 w-32 shrink-0 rounded-lg overflow-hidden">
               <Image
-                src={item.image}
+                src={item.image_url}
                 alt={item.name}
                 fill
                 className="object-cover"
