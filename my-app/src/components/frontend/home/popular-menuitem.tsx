@@ -35,7 +35,7 @@ const mockMenuItems = Array.from({ length: 20 }, (_, i) => ({
 
 export function PopularMenuItems() {
   const [activeFilter, setActiveFilter] = useState("all");
-  const [displayCount, setDisplayCount] = useState(12);
+  const [displayCount, setDisplayCount] = useState(6);
 
   const filteredItems =
     activeFilter === "all"

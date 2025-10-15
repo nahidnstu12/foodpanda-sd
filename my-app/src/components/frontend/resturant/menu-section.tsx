@@ -7,6 +7,7 @@ interface MenuSectionProps {
 }
 
 export function MenuSection({ category }: MenuSectionProps) {
+  console.log(category);
   return (
     <section id={`category-${category.id}`} className="scroll-mt-40">
       <div className="mb-6">
@@ -19,7 +20,7 @@ export function MenuSection({ category }: MenuSectionProps) {
       </div>
 
       <div className="space-y-4">
-        {(category.menu_items || []).map((item: any) => (
+        {(category.items.slice(0, 2) || []).map((item: any) => (
           <MenuItemCard key={item.id} item={item} />
         ))}
       </div>
