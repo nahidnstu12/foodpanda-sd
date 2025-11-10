@@ -2,16 +2,56 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Menu,
-  ShoppingCart,
-  User
-} from 'lucide-react';
+import { LayoutDashboard, Menu, ShoppingCart, User } from 'lucide-react';
 import Link from 'next/link';
 
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { signOut, useSession } from '@/lib/auth-client';
+import { useAuthStore } from '@/store/authStore';
+import { LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+function DropdownMenuWithIcon() {
+  const { data: session } = useSession();
+  const name = session?.user?.name;
+  const router = useRouter();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full text-white bg-black">
+        <Avatar>
+          <AvatarFallback className="bg-[#06C167] hover:bg-[#05a855] text-white">
+            {name?.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={() => {
+          router.push('/dashboard');
+        }}>
+          <LayoutDashboard className="h-4 w-4" /> Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem className="text-destructive" onClick={() => {
+          signOut();
+        }}>
+          <LogOut className="h-4 w-4" /> Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 const MobileMenu = () => {
   return (
     <Sheet>
@@ -46,6 +86,10 @@ const MobileMenu = () => {
 export function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [location, setLocation] = useState('Dhanmondi');
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const { data: session } = useSession();
+  console.log('session user', session);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-[#1C1C1C] text-white">
@@ -90,13 +134,20 @@ export function Header() {
           </Button> */}
 
           {/* Sign In */}
-          <Button
-            variant="ghost"
-            className="hidden lg:flex text-white hover:bg-white/10"
-          >
-            <User className="mr-2 h-4 w-4" />
-            Sign In
-          </Button>
+          {session?.user?.id ? (
+            <DropdownMenuWithIcon />
+          ) : (
+            <Button
+              variant="ghost"
+              className="hidden lg:flex text-white"
+              onClick={() => {
+                router.push('/login');
+              }}
+            >
+              <User className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          )}
 
           {/* Cart */}
           <Link href="/cart">

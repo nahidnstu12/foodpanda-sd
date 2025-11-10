@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { publicRoutes } from "./config/route-list";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // const startTime = Date.now();
   const pathname = request.nextUrl.pathname;
   const sessionCookie = getSessionCookie(request);
