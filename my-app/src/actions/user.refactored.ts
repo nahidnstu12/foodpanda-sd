@@ -41,7 +41,7 @@ export async function findUserRoles(userId: unknown): Promise<ActionResult> {
     if (error.name === "ZodError") {
       return {
         success: false,
-        message: error.errors[0]?.message || "Invalid input",
+        message: error.issues[0]?.message || "Invalid input",
       };
     }
     console.error("Error in findUserRoles:", error);
@@ -71,7 +71,7 @@ export async function userListWithPagination(
       } catch (error: any) {
         if (error.name === "ZodError") {
           throw new Error(
-            error.errors[0]?.message || "Invalid pagination parameters"
+            error.issues[0]?.message || "Invalid pagination parameters"
           );
         }
         throw error;
@@ -104,7 +104,7 @@ export async function getUserById(id: unknown): Promise<ActionResult> {
         if (error.name === "ZodError") {
           return {
             success: false,
-            message: error.errors[0]?.message || "Invalid user ID",
+            message: error.issues[0]?.message || "Invalid user ID",
           };
         }
         throw error;
@@ -141,7 +141,7 @@ export async function createUser(input: unknown): Promise<ActionResult> {
         if (error.name === "ZodError") {
           return {
             success: false,
-            message: error.errors[0]?.message || "Validation failed",
+            message: error.issues[0]?.message || "Validation failed",
           };
         }
         throw error;
@@ -186,7 +186,7 @@ export async function updateUser(
         if (error.name === "ZodError") {
           return {
             success: false,
-            message: error.errors[0]?.message || "Validation failed",
+            message: error.issues[0]?.message || "Validation failed",
           };
         }
         throw error;
@@ -215,7 +215,7 @@ export async function deleteUser(id: unknown): Promise<ActionResult> {
         if (error.name === "ZodError") {
           return {
             success: false,
-            message: error.errors[0]?.message || "Invalid user ID",
+            message: error.issues[0]?.message || "Invalid user ID",
           };
         }
         throw error;
@@ -242,7 +242,7 @@ export async function getUserDirectPermissions(
     if (error.name === "ZodError") {
       return {
         success: false,
-        message: error.errors[0]?.message || "Invalid user ID",
+        message: error.issues[0]?.message || "Invalid user ID",
       };
     }
     console.error("Error in getUserDirectPermissions:", error);
@@ -271,7 +271,7 @@ export async function setUserDirectPermissions(
     if (error.name === "ZodError") {
       return {
         success: false,
-        message: error.errors[0]?.message || "Invalid input",
+        message: error.issues[0]?.message || "Invalid input",
       };
     }
     console.error("Error in setUserDirectPermissions:", error);
@@ -297,7 +297,7 @@ export async function setUserRole(
     if (error.name === "ZodError") {
       return {
         success: false,
-        message: error.errors[0]?.message || "Invalid input",
+        message: error.issues[0]?.message || "Invalid input",
       };
     }
     console.error("Error in setUserRole:", error);
