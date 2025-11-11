@@ -1,9 +1,10 @@
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from '@/components/app-sidebar';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 export default async function Sidebar({
   children,
@@ -15,13 +16,11 @@ export default async function Sidebar({
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 bg-gray-200">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex justify-between items-center gap-2 px-4 w-full">
             <SidebarTrigger className="-ml-1" />
-            {/* <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <h1>Dashboard</h1> */}
+            <Link href="/" className=" text-sm font-medium">
+              View Site
+            </Link>
           </div>
         </header>
         {children}
