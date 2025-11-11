@@ -7,9 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
+import type { PopularRestaurantDTO } from "@/types/restaurant.types";
 
-// Mock data - replace with actual API call
-// Adjusted to align with Prisma schema fields: cover_image_url (string), cuisine (string)
 const mockRestaurants = [
   {
     id: "1",
@@ -22,53 +21,13 @@ const mockRestaurants = [
       "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop",
     isFeatured: true,
   },
-  {
-    id: "2",
-    name: "Pasta Corner - Gulshan",
-    location: "Gulshan",
-    cuisine: "Italian, Pasta",
-    rating: 4.7,
-    deliveryTime: "25-35 min",
-    cover_image_url:
-      "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop",
-    isFeatured: false,
-  },
-  {
-    id: "3",
-    name: "Burger House - Banani",
-    location: "Banani",
-    cuisine: "American, Fast Food",
-    rating: 4.3,
-    deliveryTime: "20-30 min",
-    cover_image_url:
-      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop",
-    isFeatured: false,
-  },
-  {
-    id: "4",
-    name: "Italian Bistro - Uttara",
-    location: "Uttara",
-    cuisine: "Italian, Fine Dining",
-    rating: 4.8,
-    deliveryTime: "35-45 min",
-    cover_image_url:
-      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop",
-    isFeatured: true,
-  },
-  {
-    id: "5",
-    name: "Taco Fiesta - Mirpur",
-    location: "Mirpur",
-    cuisine: "Mexican, Fast Food",
-    rating: 4.6,
-    deliveryTime: "30-40 min",
-    cover_image_url:
-      "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop",
-    isFeatured: false,
-  },
 ];
 
-export function PopularRestaurants() {
+export function PopularRestaurants({
+  restaurants = [],
+}: {
+  restaurants?: PopularRestaurantDTO[];
+}) {
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -119,9 +78,15 @@ export function PopularRestaurants() {
             ref={carouselRef}
             className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
           >
-            {mockRestaurants.map((restaurant) => (
-              <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-            ))}
+            {restaurants.length > 0 ? (
+              restaurants.map((restaurant) => (
+                <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+              ))
+            ) : (
+              <div className="flex h-[200px] w-full items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400">
+                No popular restaurants yet.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -129,7 +94,7 @@ export function PopularRestaurants() {
   );
 }
 
-function RestaurantCard({ restaurant }: { restaurant: any }) {
+function RestaurantCard({ restaurant }: { restaurant: PopularRestaurantDTO }) {
   return (
     <Link href={`/resturant/${restaurant.id}`} className="block">
       <Card className="w-[280px] shrink-0 overflow-hidden hover:shadow-xl transition-all duration-300 group border-[#06C167]/10">
@@ -148,7 +113,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>
         <CardContent className="p-4">
-          <h3 className="text-lg font-semibold text-[#1C1C1C] mb-2 line-clamp-1">
+          <h3 className="text-base font-semibold text-[#1C1C1C] mb-2 line-clamp-1">
             {restaurant.name}
           </h3>
           <p className="text-sm text-[#9CA3AF] flex items-center mb-3">
@@ -158,7 +123,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
           <div className="flex items-center justify-between text-sm mb-3">
             <span className="flex items-center text-[#1C1C1C] font-medium">
               <Star className="h-4 w-4 fill-[#FFC107] text-[#FFC107] mr-1" />
-              {restaurant.rating}
+              {(restaurant.rating ?? 0).toFixed(1)}
             </span>
             <span className="flex items-center text-[#9CA3AF]">
               <Clock className="h-3 w-3 mr-1" />
@@ -168,7 +133,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
           <div className="flex gap-1 flex-wrap">
             {(restaurant.cuisine || "")
               .split(",")
-              .map((c: string) => c.trim())
+              .map((c) => c.trim())
               .filter(Boolean)
               .map((item: string) => (
                 <Badge

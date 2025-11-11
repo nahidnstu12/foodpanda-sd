@@ -2,30 +2,29 @@
 // FILE: seed/restaurant.seed.ts
 // ============================================================================
 
-import { auth } from '@/lib/auth';
-import prisma from '@/lib/prisma'; // Adjust to your prisma instance
-import { assignUserRole, createUserProfile } from '@/actions/auth';
-import { UserRole } from '@/helpers/user.enum';
+import { assignUserRole } from "@/actions/auth";
+import { UserRole } from "@/helpers/user.enum";
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/prisma"; // Adjust to your prisma instance
 
+import { CommonStatus } from "../generated/prisma";
+import { customizationPatterns } from "./data/customizations";
+import { pastaTemplates, pizzaTemplates } from "./data/menu-item";
+import { restaurantTemplates } from "./data/restaurants";
 import {
-  addPriceVariation,
   addRestaurantSpecificPriceVariation,
-  shuffleArray,
-  getRandomSubset,
-  generateRating,
-  isAvailable,
-  pickRandom,
-  generateRestaurantName,
   generateCompanyName,
-  generatePhoneNumber,
   generateLogoUrl,
-  generateCoverImageUrl,
+  generatePhoneNumber,
+  generateRating,
+  generateRestaurantName,
+  generateAddressForLocation,
+  generateDeliveryWindow,
+  getRandomSubset,
+  isAvailable,
   locationSuffixes,
-} from './utils/faker.helper';
-import { restaurantTemplates } from './data/restaurants';
-import { pastaTemplates, pizzaTemplates } from './data/menu-item';
-import { customizationPatterns } from './data/customizations';
-import { PartnerProfile } from '../generated/prisma';
+  pickRandom,
+} from "./utils/faker.helper";
 
 // ============================================================================
 // PHASE 1: Create Partner Users
@@ -38,7 +37,7 @@ async function createPartnerUsers(count: number) {
 
   for (let i = 0; i < count; i++) {
     const email = `partner${i + 1}@restaurant.com`;
-    const password = 'Partner@123'; // Use env variable in production
+    const password = "Partner@123"; // Use env variable in production
     const name = `Partner ${i + 1}`;
 
     try {
@@ -61,7 +60,7 @@ async function createPartnerUsers(count: number) {
     }
   }
 
-  console.log('\n✅ Partner users created\n');
+  console.log("\n✅ Partner users created\n");
   return partnerUsers;
 }
 
@@ -72,9 +71,9 @@ async function createPartnerUsers(count: number) {
 async function createPartnerProfiles(
   partnerUsers: { id: string; email?: string; name?: string }[]
 ) {
-  console.log('📝 Creating partner profiles...');
+  console.log("📝 Creating partner profiles...");
 
-  const profiles: PartnerProfile[] = [];
+  const profiles: { id: string; location: string }[] = [];
   const errors: Array<{
     index: number;
     userId: string;
@@ -89,21 +88,50 @@ async function createPartnerProfiles(
       // Idempotency: skip if profile already exists (helps on re-runs)
       const existing = await prisma.partnerProfile.findUnique({
         where: { owner_user_id: user.id },
+        include: {
+          address: {
+            where: { is_primary: true },
+            take: 1,
+          },
+        },
       });
 
       if (existing) {
-        profiles.push(existing);
+        let location =
+          existing.address?.[0]?.city ?? pickRandom(locationSuffixes);
+
+        if (!existing.address || existing.address.length === 0) {
+          location = pickRandom(locationSuffixes);
+          const addressPayload = generateAddressForLocation(location);
+          await prisma.address.create({
+            data: {
+              partner_profile_id: existing.id,
+              address_line_1: addressPayload.address_line_1,
+              address_line_2: addressPayload.address_line_2 ?? null,
+              city: addressPayload.city,
+              state: addressPayload.state,
+              country: addressPayload.country,
+              postal_code: addressPayload.postal_code,
+              latitude: addressPayload.latitude,
+              longitude: addressPayload.longitude,
+              is_primary: true,
+              status: CommonStatus.ACTIVE,
+            },
+          });
+        }
+
+        profiles.push({ id: existing.id, location });
         process.stdout.write(
           `\r  • Skipped existing profile ${profiles.length}/${
             partnerUsers.length
-          } (user: ${user.id}${user.email ? ', ' + user.email : ''})`
+          } (user: ${user.id}${user.email ? ", " + user.email : ""})`
         );
         continue;
       }
 
       const template = pickRandom(restaurantTemplates);
-
-      const profile: PartnerProfile = await prisma.partnerProfile.create({
+      const location = pickRandom(locationSuffixes);
+      const profile = await prisma.partnerProfile.create({
         data: {
           owner_user_id: user.id,
           company_name: generateCompanyName(
@@ -112,32 +140,49 @@ async function createPartnerProfiles(
           contact_number: generatePhoneNumber(),
           restaurant_type: template.type,
           operating_hours: {
-            monday: { open: '10:00', close: '22:00' },
-            tuesday: { open: '10:00', close: '22:00' },
-            wednesday: { open: '10:00', close: '22:00' },
-            thursday: { open: '10:00', close: '22:00' },
-            friday: { open: '10:00', close: '23:00' },
-            saturday: { open: '10:00', close: '23:00' },
-            sunday: { open: '11:00', close: '21:00' },
+            monday: { open: "10:00", close: "22:00" },
+            tuesday: { open: "10:00", close: "22:00" },
+            wednesday: { open: "10:00", close: "22:00" },
+            thursday: { open: "10:00", close: "22:00" },
+            friday: { open: "10:00", close: "23:00" },
+            saturday: { open: "10:00", close: "23:00" },
+            sunday: { open: "11:00", close: "21:00" },
           },
         },
       });
 
-      profiles.push(profile);
+      const addressPayload = generateAddressForLocation(location);
+      await prisma.address.create({
+        data: {
+          partner_profile_id: profile.id,
+          address_line_1: addressPayload.address_line_1,
+          address_line_2: addressPayload.address_line_2 ?? null,
+          city: addressPayload.city,
+          state: addressPayload.state,
+          country: addressPayload.country,
+          postal_code: addressPayload.postal_code,
+          latitude: addressPayload.latitude,
+          longitude: addressPayload.longitude,
+          is_primary: true,
+          status: CommonStatus.ACTIVE,
+        },
+      });
+
+      profiles.push({ id: profile.id, location });
       process.stdout.write(
         `\r  ✓ Created profile ${profiles.length}/${
           partnerUsers.length
-        } (user: ${user.id}${user.email ? ', ' + user.email : ''})`
+        } (user: ${user.id}${user.email ? ", " + user.email : ""})`
       );
     } catch (error: any) {
       // Capture and log rich error info
       errors.push({ index: i, userId: user.id, email: user.email, error });
 
       // Specific handling for Prisma unique constraint
-      if (error && error.code === 'P2002') {
+      if (error && error.code === "P2002") {
         console.error(
           `\n  ✗ Unique constraint violation for user ${user.id}${
-            user.email ? ' (' + user.email + ')' : ''
+            user.email ? " (" + user.email + ")" : ""
           } on target ${JSON.stringify(error?.meta?.target)}`
         );
 
@@ -155,7 +200,7 @@ async function createPartnerProfiles(
       } else {
         console.error(
           `\n  ✗ Failed to create profile for user ${user.id}${
-            user.email ? ' (' + user.email + ')' : ''
+            user.email ? " (" + user.email + ")" : ""
           }:`,
           error
         );
@@ -163,15 +208,15 @@ async function createPartnerProfiles(
     }
   }
 
-  console.log('\n✅ Partner profiles processed\n');
+  console.log("\n✅ Partner profiles processed\n");
 
   if (errors.length > 0) {
-    console.warn('⚠️ Profile creation errors summary:');
+    console.warn("⚠️ Profile creation errors summary:");
     for (const e of errors) {
       console.warn(
         `  - index=${e.index} user=${e.userId}${
-          e.email ? ' (' + e.email + ')' : ''
-        } code=${e?.error?.code ?? 'unknown'}`
+          e.email ? " (" + e.email + ")" : ""
+        } code=${e?.error?.code ?? "unknown"}`
       );
     }
   }
@@ -183,41 +228,44 @@ async function createPartnerProfiles(
 // PHASE 3: Create Restaurants
 // ============================================================================
 
-async function createRestaurants(profiles: { id: string }[]) {
-  console.log('📝 Creating restaurants...');
+async function createRestaurants(
+  profiles: { id: string; location?: string }[]
+) {
+  console.log("📝 Creating restaurants...");
 
   const restaurants = [];
   const restaurantStyles = [
-    'Family-friendly',
-    'Upscale',
-    'Casual',
-    'Fast-casual',
-    'Fine dining',
-    'Street food',
-    'Fusion',
-    'Traditional',
-    'Modern',
-    'Rustic',
+    "Family-friendly",
+    "Upscale",
+    "Casual",
+    "Fast-casual",
+    "Fine dining",
+    "Street food",
+    "Fusion",
+    "Traditional",
+    "Modern",
+    "Rustic",
   ];
 
   for (let i = 0; i < profiles.length; i++) {
     const template = pickRandom(restaurantTemplates);
-    const location = pickRandom(locationSuffixes);
+    const location = profiles[i]?.location ?? pickRandom(locationSuffixes);
     const style = pickRandom(restaurantStyles);
     const name = generateRestaurantName(template.namePattern, location);
+    const { min: deliveryMin, max: deliveryMax } = generateDeliveryWindow();
 
     // Add style-specific description enhancements
     const styleDescriptions = {
-      'Family-friendly': 'Perfect for families with kids',
-      Upscale: 'Elegant dining experience',
-      Casual: 'Relaxed atmosphere',
-      'Fast-casual': 'Quick service, quality food',
-      'Fine dining': 'Sophisticated culinary experience',
-      'Street food': 'Authentic street-style flavors',
-      Fusion: 'Creative blend of cuisines',
-      Traditional: 'Classic recipes passed down',
-      Modern: 'Contemporary twist on classics',
-      Rustic: 'Homestyle cooking',
+      "Family-friendly": "Perfect for families with kids",
+      Upscale: "Elegant dining experience",
+      Casual: "Relaxed atmosphere",
+      "Fast-casual": "Quick service, quality food",
+      "Fine dining": "Sophisticated culinary experience",
+      "Street food": "Authentic street-style flavors",
+      Fusion: "Creative blend of cuisines",
+      Traditional: "Classic recipes passed down",
+      Modern: "Contemporary twist on classics",
+      Rustic: "Homestyle cooking",
     };
 
     const enhancedDescription = `${template.description}. ${
@@ -234,16 +282,18 @@ async function createRestaurants(profiles: { id: string }[]) {
         cuisine: template.cuisine,
         rating: generateRating(),
         is_active: true,
-      },
+        delivery_time_min: deliveryMin,
+        delivery_time_max: deliveryMax,
+      } as any,
     });
 
-    restaurants.push({ ...restaurant, type: template.type, style });
+    restaurants.push({ ...restaurant, type: template.type, style, location });
     process.stdout.write(
       `\r  ✓ Created restaurant ${i + 1}/${profiles.length}`
     );
   }
 
-  console.log('\n✅ Restaurants created\n');
+  console.log("\n✅ Restaurants created\n");
   return restaurants;
 }
 
@@ -252,12 +302,12 @@ async function createRestaurants(profiles: { id: string }[]) {
 // ============================================================================
 
 async function createMenus(restaurants: { id: string }[]) {
-  console.log('📝 Creating menus...');
+  console.log("📝 Creating menus...");
 
   const menusData = restaurants.map((restaurant) => ({
     restaurant_id: restaurant.id,
-    name: 'Main Menu',
-    description: 'Our full menu with pizzas, pastas, and more',
+    name: "Main Menu",
+    description: "Our full menu with pizzas, pastas, and more",
     is_active: true,
   }));
 
@@ -282,7 +332,7 @@ async function createMenus(restaurants: { id: string }[]) {
 // ============================================================================
 
 async function createCategories(menus: any[]) {
-  console.log('📝 Creating categories...');
+  console.log("📝 Creating categories...");
 
   const categoriesData = [];
 
@@ -291,13 +341,13 @@ async function createCategories(menus: any[]) {
     categoriesData.push(
       {
         menu_id: menu.id,
-        name: 'Classic Pizzas',
-        description: 'Traditional and specialty pizzas',
+        name: "Classic Pizzas",
+        description: "Traditional and specialty pizzas",
       },
       {
         menu_id: menu.id,
-        name: 'Gourmet Pastas',
-        description: 'Fresh pasta dishes made to order',
+        name: "Gourmet Pastas",
+        description: "Fresh pasta dishes made to order",
       }
     );
   }
@@ -326,38 +376,38 @@ async function createCategories(menus: any[]) {
 // ============================================================================
 
 async function createMenuItems(categories: any[]) {
-  console.log('📝 Creating menu items...');
+  console.log("📝 Creating menu items...");
 
   const menuItemsData = [];
   const restaurantVariations = new Map(); // Track restaurant-specific variations
 
   for (const category of categories) {
-    const isPizzaCategory = category.name.toLowerCase().includes('pizza');
+    const isPizzaCategory = category.name.toLowerCase().includes("pizza");
     const templates = isPizzaCategory ? pizzaTemplates : pastaTemplates;
-    const itemType = isPizzaCategory ? 'pizza' : 'pasta';
+    const itemType = isPizzaCategory ? "pizza" : "pasta";
     const restaurantId = category.menu.restaurant_id;
 
     // Get or create restaurant-specific variations
     if (!restaurantVariations.has(restaurantId)) {
       restaurantVariations.set(restaurantId, {
         prefixes: [
-          'Special',
-          'Signature',
-          'Classic',
-          'Deluxe',
-          'Premium',
+          "Special",
+          "Signature",
+          "Classic",
+          "Deluxe",
+          "Premium",
           "Chef's",
-          'House',
-          'Gourmet',
+          "House",
+          "Gourmet",
         ],
         suffixes: [
-          'Delight',
-          'Blast',
-          'Supreme',
-          'Fiesta',
-          'Special',
-          'Classic',
-          'Fusion',
+          "Delight",
+          "Blast",
+          "Supreme",
+          "Fiesta",
+          "Special",
+          "Classic",
+          "Fusion",
         ],
         skipItems: Math.floor(Math.random() * 3) + 1, // Skip 1-3 items
         priceMultiplier: 0.9 + Math.random() * 0.2, // ±10% restaurant-specific pricing
@@ -406,10 +456,10 @@ async function createMenuItems(categories: any[]) {
 
       // Restaurant-specific description enhancement
       const descriptionEnhancements = [
-        'Made with fresh ingredients',
-        'Prepared to perfection',
-        'Our signature recipe',
-        'Handcrafted with love',
+        "Made with fresh ingredients",
+        "Prepared to perfection",
+        "Our signature recipe",
+        "Handcrafted with love",
         "Chef's special preparation",
       ];
 
@@ -471,7 +521,7 @@ async function createMenuItems(categories: any[]) {
 // ============================================================================
 
 async function createCustomizationsAndChoices(menuItems: any[]) {
-  console.log('📝 Creating customizations and choices...');
+  console.log("📝 Creating customizations and choices...");
 
   let customizationCount = 0;
   let choiceCount = 0;
@@ -480,8 +530,8 @@ async function createCustomizationsAndChoices(menuItems: any[]) {
   const BATCH_SIZE = 50;
 
   // Strongly-typed customization keys for safer indexing
-  const pizzaTypes = ['size', 'crust', 'toppings', 'cheese'] as const;
-  const pastaTypes = ['portion', 'spiceLevel', 'addOns'] as const;
+  const pizzaTypes = ["size", "crust", "toppings", "cheese"] as const;
+  const pastaTypes = ["portion", "spiceLevel", "addOns"] as const;
 
   type CustomizationPattern = {
     name: string;
@@ -496,8 +546,8 @@ async function createCustomizationsAndChoices(menuItems: any[]) {
 
     await prisma.$transaction(
       batch.map((item) => {
-        const isPizza = item.category.name.toLowerCase().includes('pizza');
-        const itemType = isPizza ? 'pizza' : 'pasta';
+        const isPizza = item.category.name.toLowerCase().includes("pizza");
+        const itemType = isPizza ? "pizza" : "pasta";
         const patterns = customizationPatterns[itemType];
 
         // Determine which customization types this item should have
@@ -554,8 +604,8 @@ async function createCustomizationsAndChoices(menuItems: any[]) {
 // ============================================================================
 
 export async function seedRestaurantSystem() {
-  console.log('\n🌱 Starting Restaurant System Seeding...\n');
-  console.log('='.repeat(50));
+  console.log("\n🌱 Starting Restaurant System Seeding...\n");
+  console.log("=".repeat(50));
 
   try {
     // PHASE 1: Create 20 partner users
@@ -579,9 +629,9 @@ export async function seedRestaurantSystem() {
     // PHASE 7: Create customizations and choices
     await createCustomizationsAndChoices(menuItems);
 
-    console.log('='.repeat(50));
-    console.log('\n✅ Restaurant System Seeding Completed!\n');
-    console.log('📊 Summary:');
+    console.log("=".repeat(50));
+    console.log("\n✅ Restaurant System Seeding Completed!\n");
+    console.log("📊 Summary:");
     console.log(`   • Partner Users: ${partnerUsers.length}`);
     console.log(`   • Restaurants: ${restaurants.length}`);
     console.log(`   • Menus: ${menus.length}`);
@@ -590,7 +640,7 @@ export async function seedRestaurantSystem() {
     console.log(`   • Estimated Customizations: ${menuItems.length * 3}`);
     console.log(`   • Estimated Choices: ${menuItems.length * 15}\n`);
   } catch (error) {
-    console.error('\n❌ Seeding failed:', error);
+    console.error("\n❌ Seeding failed:", error);
     throw error;
   }
 }
@@ -601,10 +651,10 @@ export async function seedRestaurantSystem() {
 
 seedRestaurantSystem()
   .then(() => {
-    console.log('🎉 Seed process completed successfully');
+    console.log("🎉 Seed process completed successfully");
     process.exit(0);
   })
   .catch((error) => {
-    console.error('💥 Seed process failed:', error);
+    console.error("💥 Seed process failed:", error);
     process.exit(1);
   });

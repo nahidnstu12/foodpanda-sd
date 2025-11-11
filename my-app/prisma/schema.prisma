@@ -240,6 +240,8 @@ model Restaurant {
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
   deleted_at         DateTime?
+  delivery_time_min  Int       @default(30)
+  delivery_time_max  Int       @default(45)
 
   partner_profile PartnerProfile @relation(fields: [partner_profile_id], references: [id], onDelete: Cascade)
   menus           Menu[] // A restaurant can have multiple menus
@@ -289,6 +291,7 @@ model MenuItem {
   description   String
   price         Float // Base price
   image_url     String?
+  delivery_time String?
   restaurant_id String // Denormalized from category → menu → restaurant
   is_available  Boolean  @default(true)
   category_id   String
