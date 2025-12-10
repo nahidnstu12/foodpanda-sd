@@ -1,6 +1,6 @@
 "use server";
 
-import db from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 
 export async function findUserRoles(userId: string) {
   if (!userId) return { success: false, message: "User not found" };

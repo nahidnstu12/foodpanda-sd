@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 
-import db from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { loginFormSchema } from "@/schema/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";

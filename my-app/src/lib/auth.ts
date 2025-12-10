@@ -1,12 +1,10 @@
 import { sendVerificationEmail } from "@/actions/send-email";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "../../generated/prisma";
+import { db as prisma } from "@/lib/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins";
 import { findUserRoles } from "@/actions/user";
-
-const prisma = new PrismaClient();
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,

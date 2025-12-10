@@ -1,5 +1,5 @@
 import PermissionCache, { UserPermissions } from "@/lib/permissionCache";
-import db from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { cache } from "react";
 
 export default class PermissionService {

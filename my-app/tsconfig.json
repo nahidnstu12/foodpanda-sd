@@ -20,7 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@generated/*": ["../../generated/*"]
+      "@generated/*": ["./generated/*"]
     }
   },
   "include": ["next-env.d.ts", "types.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/types/**/*"],
