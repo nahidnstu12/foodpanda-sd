@@ -10,15 +10,14 @@ export default class PermissionService {
     async (userId: string): Promise<UserPermissions> => {
       console.log("DB Query for user:", userId); // This should only run once per request
 
-      const user = await db.user.findUnique({
+      const user = (await db.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-
+        include: {
           user_roles: {
             select: {
               id: true,
               name: true,
+              key: true,
               role_permissions: {
                 select: {
                   key: true,
@@ -30,7 +29,16 @@ export default class PermissionService {
             },
           },
         },
-      });
+      })) as any;
+
+      // fetch direct user permissions via user relation (cast to any until prisma types are regenerated)
+      const directPermsWrap = (await db.user.findUnique({
+        where: { id: userId },
+        include: { user_permissions: { select: { key: true } } },
+      } as any)) as any;
+      const directPerms = (directPermsWrap?.user_permissions ?? []) as Array<{
+        key: string;
+      }>;
 
       if (!user) {
         throw new Error("User not found");
@@ -39,22 +47,29 @@ export default class PermissionService {
       // Convert to optimized format
       const rolePermissions = new Map<string, Set<string>>();
 
-      user.user_roles.forEach((ur) => {
+      user.user_roles.forEach((ur: any) => {
+        const roleKey = ur.key ?? ur.name;
         const rolePermissionsSet = new Set<string>();
-        ur.role_permissions.forEach((rp) => {
+        ur.role_permissions.forEach((rp: any) => {
           const permissionKey = `${rp.key}`;
           rolePermissionsSet.add(permissionKey);
         });
-        rolePermissions.set(ur.name, rolePermissionsSet);
+        rolePermissions.set(roleKey, rolePermissionsSet);
       });
+
+      // Build final permission set: union across ALL roles + direct user grants
+      const base = new Set<string>();
+      for (const [, set] of rolePermissions) {
+        for (const p of set) base.add(p);
+      }
+      for (const up of directPerms) base.add(up.key);
 
       return {
         userId: user.id,
-        roleId: user.user_roles[0].id,
-        roleName: user.user_roles[0].name,
-        // roleHierarchy: 100,
-        permissions: rolePermissions.get(user.user_roles[0].name) || new Set(), // Only current role permissions
-        allRolePermissions: rolePermissions, // All roles with their permissions
+        roleId: user.user_roles[0]?.id,
+        roleName: user.user_roles[0]?.key ?? user.user_roles[0]?.name,
+        permissions: base,
+        allRolePermissions: rolePermissions,
         lastUpdated: new Date(),
       };
     }

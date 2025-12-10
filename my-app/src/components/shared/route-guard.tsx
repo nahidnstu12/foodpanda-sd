@@ -4,18 +4,14 @@ import { getSession, useSession } from "@/lib/auth-client";
 import { useAuthStore } from "@/store/authStore";
 import { redirect, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import Loader from "@/components/shared/loader";
 import { toast } from "sonner";
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const {
-    user,
-    userPermissions,
-    isLoading,
-    loadPermissions,
-    setUser,
-  } = useAuthStore();
+  const { user, userPermissions, isLoading, loadPermissions, setUser } =
+    useAuthStore();
 
   async function fetchSession() {
     const session = await getSession();
@@ -74,7 +70,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
 
   // unified loading gate to prevent any content flash
   if (!user || isLoading || !userPermissions) {
-    return <div>Loading...</div>;
+    return <Loader fullscreen />;
   }
 
   return <>{children}</>;

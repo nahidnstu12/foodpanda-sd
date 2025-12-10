@@ -27,6 +27,13 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum CommonStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
 model User {
   id                String     @id @default(cuid()) // Better Auth prefers cuid
   name              String
@@ -48,6 +55,7 @@ model User {
   address          Address[]
   sessions         Session[]
   accounts         Account[]
+  user_permissions Permission[]     @relation("user_permission")
 
   @@index([status])
   @@map("users")
@@ -158,29 +166,37 @@ model PartnerProfile {
   contact_number       String?
   // address
 
-  user    User      @relation(fields: [owner_user_id], references: [id])
-  address Address[]
+  user       User         @relation(fields: [owner_user_id], references: [id])
+  address    Address[]
+  restaurant Restaurant[]
 
   @@map("partner_profiles")
 }
 
 model Permission {
-  id          String  @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  key         String  @unique
+  key         String       @unique
   description String?
   group       String?
+  status      CommonStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   role_permissions Role[] @relation("role_permission")
+  user_permissions User[] @relation("user_permission")
 
   @@map("permissions")
 }
 
 model Role {
-  id          String  @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  key         String  @unique
+  key         String       @unique
   description String?
+  status      CommonStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   role_permissions Permission[] @relation("role_permission")
   user_roles       User[]       @relation("user_role")
@@ -189,7 +205,7 @@ model Role {
 }
 
 model Address {
-  id                 String  @id @default(uuid())
+  id                 String       @id @default(uuid())
   user_id            String?
   partner_profile_id String?
   address_line_1     String
@@ -200,11 +216,141 @@ model Address {
   postal_code        String
   latitude           Float
   longitude          Float
-  is_primary         Boolean @default(false)
+  is_primary         Boolean      @default(false)
+  status             CommonStatus @default(ACTIVE)
 
   user            User?           @relation(fields: [user_id], references: [id])
   partner_profile PartnerProfile? @relation(fields: [partner_profile_id], references: [id])
 
   @@index([city, state])
   @@map("addresses")
+}
+
+model Restaurant {
+  id                 String    @id @default(uuid())
+  name               String
+  description        String?
+  logo_url           String?
+  cover_image_url    String?
+  cuisine            String // e.g., "Italian", "Fast Food"
+  rating             Float     @default(0)
+  is_active          Boolean   @default(false)
+  partner_profile_id String // One-to-manywith PartnerProfile
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+
+  partner_profile PartnerProfile @relation(fields: [partner_profile_id], references: [id])
+  menus           Menu[] // A restaurant can have multiple menus
+
+  @@index([cuisine])
+  @@index([is_active, rating])
+  @@map("restaurants")
+}
+
+// A restaurant can have multiple menus (e.g., Lunch, Dinner, Weekend Special)
+model Menu {
+  id            String   @id @default(uuid())
+  name          String // "Lunch Menu", "Main Menu"
+  description   String?
+  is_active     Boolean  @default(true)
+  restaurant_id String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id])
+  categories Category[] // A menu is organized by categories
+
+  @@index([restaurant_id, is_active]) // Active menus per restaurant
+  @@map("menus")
+}
+
+// Categories group menu items (e.g., Appetizers, Pizza, Pasta, Desserts)
+model Category {
+  id          String   @id @default(uuid())
+  name        String // "Classic Pizzas", "Creamy Pastas"
+  description String?
+  menu_id     String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  menu       Menu       @relation(fields: [menu_id], references: [id])
+  menu_items MenuItem[] // A category contains multiple items
+
+  @@index([menu_id]) // Fast menu lookup
+  @@map("categories")
+}
+
+// The actual food item
+model MenuItem {
+  id            String   @id @default(uuid())
+  name          String // "Margherita Pizza"
+  description   String
+  price         Float // Base price
+  image_url     String?
+  restaurant_id String // Denormalized from category → menu → restaurant
+  is_available  Boolean  @default(true)
+  category_id   String
+  search_tags   String[] // ["vegetarian", "spicy", "gluten-free"]
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  category       Category        @relation(fields: [category_id], references: [id])
+  customizations Customization[] // An item can have customizations
+
+  @@index([category_id]) // Fast category filtering
+  @@index([restaurant_id, is_available])
+  @@map("menu_items")
+}
+
+// THIS IS THE KEY TO SCALABILITY: For toppings, crust, sauce options, etc.
+model Customization {
+  id            String   @id @default(uuid())
+  name          String // "Choose Your Crust", "Select Toppings"
+  is_required   Boolean  @default(false)
+  min_selection Int      @default(0)
+  max_selection Int      @default(1)
+  menu_item_id  String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  menu_item MenuItem @relation(fields: [menu_item_id], references: [id])
+  choices   Choice[] // A customization has multiple choices
+
+  @@map("customizations")
+}
+
+// The actual options for a customization
+model Choice {
+  id               String   @id @default(uuid())
+  name             String // "Thin Crust", "Pepperoni", "Extra Cheese"
+  price_change     Float // e.g., 0 for thin crust, 1.5 for extra cheese
+  customization_id String
+  is_available     Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  customization Customization @relation(fields: [customization_id], references: [id])
+
+  @@map("choices")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     String // ERROR, WARN, INFO, HTTP, VERBOSE, DEBUG, SILLY
+  message   String
+  timestamp DateTime @default(now())
+  service   String?
+  userId    String?  @map("user_id")
+  requestId String?  @map("request_id")
+  metadata  String? // JSON string
+  stack     String?
+  duration  Int? // milliseconds
+
+  @@index([level])
+  @@index([timestamp])
+  @@index([service])
+  @@index([userId])
+  @@index([requestId])
+  @@map("logs")
 }

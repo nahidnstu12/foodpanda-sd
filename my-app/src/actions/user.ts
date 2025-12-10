@@ -1,6 +1,18 @@
 "use server";
 
+import { invalidateUserPermissions } from "@/actions/permissions";
+import { PERMISSIONS } from "@/config/permissions";
+import { UserRole } from "@/helpers/user.enum";
+import { auth } from "@/lib/auth";
+import {
+  buildOrderBy,
+  buildWhereFromFilters,
+  paginatePrisma,
+} from "@/lib/datatable";
 import { db } from "@/lib/prisma";
+import { withActionGuard } from "@/lib/withActionGuard";
+import { headers } from "next/headers";
+import { UserStatus } from "../../generated/prisma";
 
 export async function findUserRoles(userId: string) {
   if (!userId) return { success: false, message: "User not found" };
@@ -30,3 +42,512 @@ export async function findUserRoles(userId: string) {
     return { success: false, message: "Error finding user roles" };
   }
 }
+
+export async function userListWithPagination(params: any) {
+  const { page, page_size, sort, order, filters } = params ?? {};
+  const result = await withActionGuard(
+    "user.list",
+    { anyOf: [PERMISSIONS.LIST_USERS, PERMISSIONS.VIEW_USER], audit: true },
+    async ({ userId }) => {
+      const where = buildWhereFromFilters(filters);
+      const orderBy = buildOrderBy(sort, order);
+
+      // scope: non-admins can only see users sharing their roles
+      const session = await auth.api.getSession({ headers: await headers() });
+      const roles: string[] = (session?.user as any)?.roles ?? [];
+      const isAdmin =
+        roles?.includes(UserRole.ADMIN) ||
+        roles?.includes(UserRole.SUPER_ADMIN);
+
+      let effectiveWhere: any = where ?? {};
+      if (!isAdmin && roles?.length) {
+        const roleScopeFilter = {
+          user_roles: { some: { key: { in: roles } } },
+        } as const;
+        const hasBaseFilters =
+          effectiveWhere && Object.keys(effectiveWhere).length > 0;
+        effectiveWhere = hasBaseFilters
+          ? { AND: [effectiveWhere, roleScopeFilter] }
+          : roleScopeFilter;
+      }
+
+      const { items, pagination } = await paginatePrisma(
+        db.user,
+        { where: effectiveWhere, orderBy },
+        { page, page_size, sort, order, filters }
+      );
+      return { items, pagination };
+    }
+  );
+  if (!result.success) {
+    throw new Error(result.message || "Unauthorized");
+  }
+  return result.data;
+}
+
+export async function getUserById(id: string) {
+  if (!id) return { success: false, message: "Missing id" };
+  const result = await withActionGuard(
+    "user.get",
+    { required: PERMISSIONS.VIEW_USER, audit: true },
+    async () => {
+      const user = await db.user.findUnique({ where: { id } });
+      if (!user) throw new Error("NOT_FOUND");
+      return user;
+    }
+  );
+  if (!result.success) return result;
+  return { success: true, data: result.data };
+}
+
+export async function createUser(input: {
+  name: string;
+  email: string;
+  phone?: string | null;
+  status: UserStatus;
+}) {
+  const result = await withActionGuard(
+    "user.create",
+    { required: PERMISSIONS.CREATE_USER, audit: true },
+    async () => {
+      const created = await db.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone ?? null,
+          status: input.status,
+        },
+      });
+      return created;
+    }
+  );
+  if (!result.success)
+    return {
+      success: false,
+      message: result.message,
+    } as any;
+  return { success: true, data: result.data };
+}
+
+export async function updateUser(
+  id: string,
+  input: { name: string; phone?: string | null; status: UserStatus }
+) {
+  if (!id) return { success: false, message: "Missing id" };
+  const result = await withActionGuard(
+    "user.update",
+    { required: PERMISSIONS.UPDATE_USER, audit: true },
+    async () => {
+      const updated = await db.user.update({
+        where: { id },
+        data: {
+          name: input.name,
+          phone: input.phone ?? null,
+          status: input.status,
+        },
+      });
+      return updated;
+    }
+  );
+  if (!result.success) return result as any;
+  return { success: true, data: result.data };
+}
+
+export async function deleteUser(id: string) {
+  if (!id) return { success: false, message: "Missing id" };
+  const result = await withActionGuard(
+    "user.delete",
+    { required: PERMISSIONS.DELETE_USER, audit: true },
+    async () => {
+      await db.user.delete({ where: { id } });
+      return true;
+    }
+  );
+  if (!result.success) return result as any;
+  return { success: true };
+}
+
+export async function getUserDirectPermissions(userId: string) {
+  if (!userId) return { success: false, message: "Missing userId" };
+  try {
+    const user = (await db.user.findUnique({
+      where: { id: userId },
+      include: { user_permissions: { select: { id: true } } },
+    } as any)) as any;
+    return {
+      success: true,
+      data: (user?.user_permissions ?? []).map((p: any) => p.id),
+    };
+  } catch (e) {
+    console.error("getUserDirectPermissions error:", e);
+    return { success: false, message: "Failed to fetch permissions" };
+  }
+}
+
+export async function setUserDirectPermissions(
+  userId: string,
+  permissionIds: string[]
+) {
+  if (!userId) return { success: false, message: "Missing userId" };
+  try {
+    // Reset then connect (replace strategy)
+    await db.user.update({
+      where: { id: userId },
+      data: { user_permissions: { set: [] } },
+    } as any);
+    if (permissionIds?.length) {
+      await db.user.update({
+        where: { id: userId },
+        data: {
+          user_permissions: {
+            connect: permissionIds.map((id) => ({ id })),
+          },
+        },
+      } as any);
+    }
+    // Bust permission cache for this user so UI sees changes immediately
+    await invalidateUserPermissions(userId);
+    return { success: true };
+  } catch (e) {
+    console.error("setUserDirectPermissions error:", e);
+    return { success: false, message: "Failed to save permissions" };
+  }
+}
+
+export async function setUserRole(userId: string, roleId: string) {
+  if (!userId || !roleId)
+    return { success: false, message: "Missing userId or roleId" };
+  try {
+    // replace existing roles with the selected one
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        user_roles: {
+          set: [],
+        },
+      },
+    } as any);
+
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        user_roles: {
+          connect: [{ id: roleId }],
+        },
+      },
+    } as any);
+    // Bust permission cache for this user so role change takes effect
+    await invalidateUserPermissions(userId);
+    return { success: true };
+  } catch (e) {
+    console.error("setUserRole error:", e);
+    return { success: false, message: "Failed to set user role" };
+  }
+}
+
+// "use server";
+
+// import { userService } from "@/services/userService";
+// import { withActionGuard } from "@/lib/withActionGuard";
+// import { PERMISSIONS } from "@/config/permissions";
+// import {
+//   createUserSchema,
+//   updateUserSchema,
+//   userIdSchema,
+//   paginationSchema,
+//   permissionIdsSchema,
+//   roleIdSchema,
+//   type CreateUserInput,
+//   type UpdateUserInput,
+// } from "@/validators/user.validator";
+// import { sanitizeString, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
+// import type { ActionResult, PaginationResult } from "@/types/user.types";
+
+// /**
+//  * Refactored User Actions - Following Layered Architecture
+//  *
+//  * Layer: Actions (API Entry Point)
+//  * Responsibilities:
+//  * - Input validation & sanitization
+//  * - Authorization checks
+//  * - Error handling & formatting
+//  * - Calling service layer
+//  */
+
+// /**
+//  * Get user roles and profiles
+//  */
+// export async function findUserRoles(userId: unknown): Promise<ActionResult> {
+//   try {
+//     // 1. Validate input
+//     const validatedUserId = userIdSchema.parse(userId);
+
+//     // 2. Call service layer
+//     return await userService.getUserRoles(validatedUserId);
+//   } catch (error: any) {
+//     if (error.name === "ZodError") {
+//       return {
+//         success: false,
+//         message: error.issues[0]?.message || "Invalid input",
+//       };
+//     }
+//     console.error("Error in findUserRoles:", error);
+//     return { success: false, message: "Error finding user roles" };
+//   }
+// }
+
+// /**
+//  * List users with pagination
+//  */
+// export async function userListWithPagination(
+//   params: unknown
+// ): Promise<PaginationResult<any>> {
+//   const result = await withActionGuard(
+//     "user.list",
+//     { anyOf: [PERMISSIONS.LIST_USERS, PERMISSIONS.VIEW_USER], audit: true },
+//     async ({ userId }) => {
+//       try {
+//         // 1. Validate input
+//         const validated = paginationSchema.parse(params);
+
+//         // 2. Call service layer
+//         return await userService.listWithPagination({
+//           ...validated,
+//           userId,
+//         });
+//       } catch (error: any) {
+//         if (error.name === "ZodError") {
+//           throw new Error(
+//             error.issues[0]?.message || "Invalid pagination parameters"
+//           );
+//         }
+//         throw error;
+//       }
+//     }
+//   );
+
+//   if (!result.success) {
+//     throw new Error(result.message || "Unauthorized");
+//   }
+
+//   return result.data;
+// }
+
+// /**
+//  * Get user by ID
+//  */
+// export async function getUserById(id: unknown): Promise<ActionResult> {
+//   const result = await withActionGuard(
+//     "user.get",
+//     { required: PERMISSIONS.VIEW_USER, audit: true },
+//     async () => {
+//       try {
+//         // 1. Validate input
+//         const validatedId = userIdSchema.parse(id);
+
+//         // 2. Call service layer
+//         return await userService.getById(validatedId);
+//       } catch (error: any) {
+//         if (error.name === "ZodError") {
+//           return {
+//             success: false,
+//             message: error.issues[0]?.message || "Invalid user ID",
+//           };
+//         }
+//         throw error;
+//       }
+//     }
+//   );
+
+//   return result;
+// }
+
+// /**
+//  * Create new user
+//  */
+// export async function createUser(input: unknown): Promise<ActionResult> {
+//   const result = await withActionGuard(
+//     "user.create",
+//     { required: PERMISSIONS.CREATE_USER, audit: true },
+//     async () => {
+//       try {
+//         // 1. Validate input
+//         const validated = createUserSchema.parse(input);
+
+//         // 2. Sanitize input
+//         const sanitized: CreateUserInput = {
+//           name: sanitizeString(validated.name),
+//           email: sanitizeEmail(validated.email),
+//           phone: sanitizePhone(validated.phone),
+//           status: validated.status,
+//         };
+
+//         // 3. Call service layer
+//         return await userService.create(sanitized);
+//       } catch (error: any) {
+//         if (error.name === "ZodError") {
+//           return {
+//             success: false,
+//             message: error.issues[0]?.message || "Validation failed",
+//           };
+//         }
+//         throw error;
+//       }
+//     }
+//   );
+
+//   return result;
+// }
+
+// /**
+//  * Update user
+//  */
+// export async function updateUser(
+//   id: unknown,
+//   input: unknown
+// ): Promise<ActionResult> {
+//   const result = await withActionGuard(
+//     "user.update",
+//     { required: PERMISSIONS.UPDATE_USER, audit: true },
+//     async () => {
+//       try {
+//         // 1. Validate inputs
+//         const validatedId = userIdSchema.parse(id);
+//         const validated = updateUserSchema.parse(input);
+
+//         // 2. Sanitize input
+//         const sanitized: UpdateUserInput = { phone: null };
+//         if (validated.name !== undefined) {
+//           sanitized.name = sanitizeString(validated.name);
+//         }
+//         if (validated.phone !== undefined) {
+//           sanitized.phone = sanitizePhone(validated.phone);
+//         }
+//         if (validated.status !== undefined) {
+//           sanitized.status = validated.status;
+//         }
+
+//         // 3. Call service layer
+//         return await userService.update(validatedId, sanitized);
+//       } catch (error: any) {
+//         if (error.name === "ZodError") {
+//           return {
+//             success: false,
+//             message: error.issues[0]?.message || "Validation failed",
+//           };
+//         }
+//         throw error;
+//       }
+//     }
+//   );
+
+//   return result;
+// }
+
+// /**
+//  * Delete user
+//  */
+// export async function deleteUser(id: unknown): Promise<ActionResult> {
+//   const result = await withActionGuard(
+//     "user.delete",
+//     { required: PERMISSIONS.DELETE_USER, audit: true },
+//     async () => {
+//       try {
+//         // 1. Validate input
+//         const validatedId = userIdSchema.parse(id);
+
+//         // 2. Call service layer
+//         return await userService.delete(validatedId);
+//       } catch (error: any) {
+//         if (error.name === "ZodError") {
+//           return {
+//             success: false,
+//             message: error.issues[0]?.message || "Invalid user ID",
+//           };
+//         }
+//         throw error;
+//       }
+//     }
+//   );
+
+//   return result;
+// }
+
+// /**
+//  * Get user direct permissions
+//  */
+// export async function getUserDirectPermissions(
+//   userId: unknown
+// ): Promise<ActionResult<string[]>> {
+//   try {
+//     // 1. Validate input
+//     const validatedUserId = userIdSchema.parse(userId);
+
+//     // 2. Call service layer
+//     return await userService.getDirectPermissions(validatedUserId);
+//   } catch (error: any) {
+//     if (error.name === "ZodError") {
+//       return {
+//         success: false,
+//         message: error.issues[0]?.message || "Invalid user ID",
+//       };
+//     }
+//     console.error("Error in getUserDirectPermissions:", error);
+//     return { success: false, message: "Failed to fetch permissions" };
+//   }
+// }
+
+// /**
+//  * Set user direct permissions
+//  */
+// export async function setUserDirectPermissions(
+//   userId: unknown,
+//   permissionIds: unknown
+// ): Promise<ActionResult> {
+//   try {
+//     // 1. Validate inputs
+//     const validatedUserId = userIdSchema.parse(userId);
+//     const validatedPermissionIds = permissionIdsSchema.parse(permissionIds);
+
+//     // 2. Call service layer
+//     return await userService.setDirectPermissions(
+//       validatedUserId,
+//       validatedPermissionIds
+//     );
+//   } catch (error: any) {
+//     if (error.name === "ZodError") {
+//       return {
+//         success: false,
+//         message: error.issues[0]?.message || "Invalid input",
+//       };
+//     }
+//     console.error("Error in setUserDirectPermissions:", error);
+//     return { success: false, message: "Failed to save permissions" };
+//   }
+// }
+
+// /**
+//  * Set user role
+//  */
+// export async function setUserRole(
+//   userId: unknown,
+//   roleId: unknown
+// ): Promise<ActionResult> {
+//   try {
+//     // 1. Validate inputs
+//     const validatedUserId = userIdSchema.parse(userId);
+//     const validatedRoleId = roleIdSchema.parse(roleId);
+
+//     // 2. Call service layer
+//     return await userService.setRole(validatedUserId, validatedRoleId);
+//   } catch (error: any) {
+//     if (error.name === "ZodError") {
+//       return {
+//         success: false,
+//         message: error.issues[0]?.message || "Invalid input",
+//       };
+//     }
+//     console.error("Error in setUserRole:", error);
+//     return { success: false, message: "Failed to set user role" };
+//   }
+// }
