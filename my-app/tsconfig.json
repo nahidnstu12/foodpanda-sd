@@ -23,8 +23,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@generated/*": ["./generated/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@generated/*": [
+        "./generated/*"
+      ]
     }
   },
   "include": [

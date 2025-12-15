@@ -1,4 +1,4 @@
-import db from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 
 type RestaurantQueryResult = Array<{
   id: string;

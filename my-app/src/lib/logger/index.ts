@@ -1,6 +1,6 @@
 import { Logger, createLogger } from "./logger";
 import { loggerConfigs } from "./config";
-import prisma from "../prisma";
+import { db as prisma } from "../prisma";
 
 // Global logger instances
 const loggers = new Map<string, Logger>();

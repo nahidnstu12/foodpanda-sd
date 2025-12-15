@@ -5,7 +5,7 @@ import {
   buildWhereFromFilters,
   paginatePrisma,
 } from '@/lib/datatable';
-import db from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 import { CommonStatus } from '../../generated/prisma';
 import { invalidateRolePermissions } from '@/actions/permissions';
 

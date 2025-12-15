@@ -5,7 +5,7 @@
 import { assignUserRole } from "@/actions/auth";
 import { UserRole } from "@/helpers/user.enum";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma"; // Adjust to your prisma instance
+import { db as prisma } from "@/lib/prisma"; // Adjust to your prisma instance
 
 import { CommonStatus } from "../generated/prisma";
 import { customizationPatterns } from "./data/customizations";

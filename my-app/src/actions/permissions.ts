@@ -6,7 +6,7 @@ import {
   paginatePrisma,
 } from '@/lib/datatable';
 import { UserPermissions } from '@/lib/permissionCache';
-import db from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 import PermissionService from '@/services/permissionService';
 
 const permissionService = new PermissionService();
